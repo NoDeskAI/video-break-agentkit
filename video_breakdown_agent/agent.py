@@ -13,6 +13,7 @@ from veadk.memory.short_term_memory import ShortTermMemory
 from veadk.tools.builtin_tools.web_search import web_search
 
 from .hook.final_output_hook import guard_final_user_output
+from .hook.search_output_hook import suppress_search_agent_user_output
 from .hook.video_upload_hook import hook_video_upload
 from .prompt import ROOT_AGENT_INSTRUCTION
 from .sub_agents.breakdown_agent.prompt import BREAKDOWN_AGENT_INSTRUCTION
@@ -66,14 +67,17 @@ search_agent = Agent(
     name="search_agent",
     description="联网搜索短视频行业资讯、平台规则、热门趋势等实时信息",
     instruction=(
-        "你是一个搜索助手。收到用户的搜索请求后，使用 web_search 工具搜索相关信息，"
-        "将搜索结果整理成简洁中文摘要返回。不要添加自己的推测，只基于搜索结果回答。\n"
+        "你是一个搜索助手。收到用户的搜索请求后，使用 web_search 工具搜索相关信息。\n"
+        "你负责检索与整理，不直接面向用户输出最终答复；最终答复由 video_breakdown_agent 统一给出。\n"
+        "请将检索结果整理为简洁中文摘要（供 root 复用），不要添加自己的推测，只基于搜索结果回答。\n"
         "格式注意：输出中禁止使用波浪号 ~，数值范围请用 到 或 - 代替（如 1°C到9°C），"
         "避免 Markdown 渲染器将 ~ 误解析为删除线。\n"
         "\n"
-        "完成搜索并输出摘要后，必须立即调用 transfer_to_agent，将控制权归还给 video_breakdown_agent。"
+        "完成搜索后，必须立即调用 transfer_to_agent，将控制权归还给 video_breakdown_agent。"
     ),
     tools=[web_search],
+    after_model_callback=[suppress_search_agent_user_output],
+    output_key="search_result",
 )
 
 # ==================== Factory functions (避免 SequentialAgent 共享 parent) ====================
