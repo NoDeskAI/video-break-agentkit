@@ -16,11 +16,27 @@ details = """
 
 [tags]
 industry = ["媒体内容", "短视频", "创作者工具"]
-from = "没有桌子人工智能有限公司"  # TODO: 替换为实际企业名称
+from = "杭州没有桌子人工智能有限公司"
 framework = "veadk"
 language = "python"
 tech = ["Multi-Agent", "FFmpeg", "ASR", "视觉分析", "TOS存储"]
 type = "application"
+
+[[scenarios]]
+name = "短视频创作优化"
+desc = "为内容创作者提供分镜拆解和钩子评分，优化视频吸引力和用户留存率。"
+
+[[scenarios]]
+name = "视频内容审核分析"
+desc = "自动拆解视频内容结构，辅助审核团队快速理解视频脉络和关键信息点。"
+
+[[scenarios]]
+name = "竞品视频研究"
+desc = "批量分析竞品视频的分镜手法、钩子策略和叙事节奏，提取创作灵感。"
+
+[[scenarios]]
+name = "广告创意评估"
+desc = "针对短视频广告素材，评估前三秒钩子效果，预测投放转化潜力。"
 
 [[features]]
 name = "智能分镜拆解"
@@ -33,10 +49,6 @@ desc = "采用 SequentialAgent 模式，先用视觉模型多模态分析，再�
 [[features]]
 name = "多模型灵活切换"
 desc = "通过 LiteLLM 统一路由支持 Gemini、豆包、GPT-4o 等多种视觉模型，一行配置即可切换"
-
-[[features]]
-name = "优雅降级机制"
-desc = "TOS 上传失败自动回退 base64 编码，ASR 未配置自动跳过语音识别，确保核心功能稳定运行"
 
 [[prompts]]
 text = "帮我拆解这个视频的分镜结构"
