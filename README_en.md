@@ -52,6 +52,104 @@ Third-party dependencies:
 - FFmpeg (auto-packaged via imageio-ffmpeg, no manual installation required)
 - LiteLLM (supports Gemini, Doubao, GPT-4o and other vision models)
 
+## Usage Examples
+
+Below is a typical workflow from web search to in-depth video breakdown.
+
+### 1. Web Search (Weather/Industry Info)
+
+**User:** Weather in Hangzhou
+
+**XiaoShi (Root Agent):** Based on the search results, here is the current weather and forecast for Hangzhou:
+
+📍 **Hangzhou Weather (Wednesday, Feb 11, 2026)**
+
+**Current Conditions**
+- **Temperature**: 13°C (Current), 5~15°C for the day
+- **Condition**: Sunny
+- **Wind**: North 4 (turning West in the afternoon)
+- **Humidity**: 36%
+- **Air Quality**: AQI 64 (Good)
+
+**📅 3-Day Forecast**
+
+| Date | Condition | Temp Range | Wind |
+| :--- | :--- | :--- | :--- |
+| Feb 11 (Wed) | Sunny | 5~15°C | North to West 2-4 |
+| Feb 12 (Thu) | Sunny | 6~16°C | SE 2 |
+| Feb 13 (Fri) | Cloudy | 8~20°C | South 2 |
+
+---
+
+### 2. Video Breakdown
+
+**User:** http://example.com/sample-video.mp4
+
+**XiaoShi (Root Agent):** Sure, I'll break down the scenes for you.
+
+#### 🎥 Video Breakdown Results
+
+**Video Info**
+- **Duration**: 17.07s
+- **Resolution**: 720x960
+- **Frame Rate**: 60fps
+
+**Scene List**
+
+| ID | Time | Shot | Movement | Content Description | Audio | Tags |
+| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
+| 1 | 0.0-3.0s | CU | Static | Showing a beige LocknLock bottle; transitioning to opening the lid. | None | Product Display |
+| 2 | 3.0-5.0s | CU | Static | Pouring water into the bottle; home lifestyle background. | None | Product Display |
+
+**BGM Analysis**
+- **BGM**: Yes
+- **Style**: Soft Piano/Ambient (Healing, Minimalist)
+- **Mood**: Relaxing (Positive)
+
+---
+
+### 3. Hook Analysis
+
+**User:** Analyze the first 3 seconds hook in detail.
+
+**XiaoShi (Root Agent):** 
+
+#### 🪝 First 3s Hook Analysis & Rating
+
+**Hook Elements**
+- **Visual Hook**: Close-up focusing on the handle design; "Grip-and-Lift" action reinforces convenience.
+- **Auditory Hook**: Soothing piano/violin (60-80 BPM) creates a cozy atmosphere.
+- **Content Hook**: Completes the "What it is -> How to use" loop within 3s.
+
+**Rating**
+
+| Dimension | Score (1-10) | Analysis |
+| :--- | :--- | :--- |
+| Visual Attraction | 8.5 | Sharp focus, smooth and purposeful movements. |
+| Info Efficiency | 9.0 | Delivers core value proposition within 3s. |
+
+---
+
+### 4. Generate Insight Report
+
+**User:** Give me a detailed video insight report.
+
+**XiaoShi (Root Agent):** 
+
+#### 📊 LocknLock Product Display Insight Report
+
+**1. Content Structure**
+The video follows a "General -> Detail -> Scenario -> Extension" logic, forming a complete product perception chain.
+
+**2. User Attention**
+- **Peak Attention**: 0-5s (Frequent actions, clear visual focus).
+- **Risk Point**: 10-17s (Product transition lacks smooth bridge).
+
+**3. Optimization Suggestions**
+- **Visual**: Add a "Leak-proof test" close-up.
+- **Audio**: Add crisp sound effects for lid opening.
+- **Content**: Overlay text tags like "Food-grade 304 Stainless Steel".
+
 ## Directory Structure
 
 ```bash
@@ -331,135 +429,9 @@ Generate a complete video analysis report
 What are the latest Douyin recommendation algorithm rules?
 ```
 
-## Usage Showcase
-
-The following is a complete usage case, demonstrating the entire process from web search to in-depth video breakdown and analysis.
-
-### 1. Web Search: Context Gathering
-**User**: Check the weather in Hangzhou.
-
-**XiaoShi**: Based on search results, here is the current weather and forecast for Hangzhou:
-
-📍 **Hangzhou Weather (Wednesday, Feb 11, 2026)**
-**Current Conditions**
-- Temperature: 13°C (Current), Range 5~15°C
-- Weather: Sunny
-- Wind: North force 4 (Turning west in the afternoon)
-- Humidity: 36%
-- Air Quality: AQI 64 (Good), Primary pollutant PM2.5
-
-📅 **3-Day Forecast**
-| Date | Weather | Temp Range | Wind |
-| :--- | :--- | :--- | :--- |
-| Feb 11 (Wed) | Sunny → Sunny | 5~15°C | North to West, 2-4 |
-| Feb 12 (Thu) | Sunny → Sunny | 6~16°C | Southeast, 2 |
-| Feb 13 (Fri) | Cloudy | 8~20°C | South, 2 |
-
-🌡️ **Life Index Reference**
-- Car Wash: Suitable today (No rain for the next two days)
-- Exercise: Not suitable for strenuous exercise today (Low pressure), suitable tomorrow
-- UV: Weak (Basic sun protection recommended)
-
-If you need more detailed hourly forecasts or long-term trends, just let me know!
-
----
-
-### 2. Video Breakdown: Scene Analysis
-**User**: Breakdown the scene structure of this video http://sns-video-hs.xhscdn.com/stream/1/110/259/01e85cee721721eb0103700397ab071344_259.mp4
-
-**XiaoShi**: Sure, breaking down the video scenes for you...
-
-#### Video Scene Breakdown Results
-**Video Info**
-- Duration: 17.07s
-- Resolution: 720x960
-- Frame Rate: 60fps
-
-**Scene List**
-| No. | Time | Shot | Camera | Visual Description | Audio | Tag |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| 1 | 0.0-3.0s | Close-up | Static | Holding a beige Lock & Lock water bottle, showing the handle. | None | Product |
-| 2 | 3.0-5.0s | Close-up | Static | Opening the lid, pouring water; background shows a calendar. | None | Product |
-| 3 | 5.0-10.0s | Medium | Static | Holding the filled bottle; home-style background. | None | Product |
-| 4 | 10.0-17.07s | Medium | Static | Showing different bottle styles in the same setting. | None | Product |
-
-**BGM Analysis**
-- BGM Detected: Yes
-- Style: Light music (Ambient), Tags: Soothing, Healing, Minimalist
-- Mood: Relaxed & Pleasant, Moderate intensity
-- Instruments: Piano (Lead), Violin, Synth, Soft percussion
-- Tempo: 60-80 BPM (Slow), Steady 4/4 beat
-
-**Full Transcription**
-- No speech content detected (ASR skipped)
-
----
-
-### 3. Hook Analysis: Effectiveness Scoring
-**User**: Analyze the hook effectiveness of the first 3 seconds and provide professional scoring.
-
-**XiaoShi**: Received. Analyzing the first three seconds in depth...
-
-#### First 3-Second Hook Analysis
-**Core Element Breakdown**
-- **Visual Hook (0-3s)**
-  - Shot & Camera: Close-up + Static, focusing on the core selling point (lid handle design).
-  - Content: 0-1.5s shows the overall scene, 1.5-3s reinforces portability through the "hold-lift" action.
-  - Visual Impact: Manicure details add refinement, beige color fits home style.
-- **Audio Hook (0-3s)**
-  - BGM: Soothing piano + violin, creating a relaxed atmosphere.
-  - Speech: None, avoiding interference, relying on visual cues.
-- **Content Hook (0-3s)**
-  - Info Density: Completes the "Appearance → Function" loop within 3s.
-  - Pain Point: Implies "Easy opening, portability," targeting the need for convenience.
-
-**Effectiveness Rating**
-| Dimension | Score (1-10) | Analysis |
-| :--- | :--- | :--- |
-| Visual Appeal | 8.5 | Close-up focuses on product, coherent action, clean background. |
-| Info Efficiency | 9.0 | Rapidly conveys "What it is → How to use," fitting short-video habits. |
-| Emotional Impact | 7.5 | BGM is soothing but lack a strong memory point. |
-| Conversion Guide | 8.0 | Action implies value, but key selling points (e.g., material) could be clearer. |
-
-**Optimization Suggestions**
-- Visual: Add a "Leak-proof test" close-up (e.g., inverting the bottle) to strengthen the USP.
-- Audio: Add a crisp sound effect for the lid opening (sync with action).
-- Content: Overlay text labels like "One-touch open · Leak-proof design".
-
----
-
-### 4. Insight Report: One-Click Generation
-**User**: Generate a complete video analysis report.
-
-**XiaoShi**: All analysis data has been integrated. Here is your detailed insight report:
-
-#### Lock & Lock Product Showcase Insight Report
-**I. Basic Info**
-- Type: E-commerce product showcase
-- Duration: 17.07s | Resolution: 720x960
-
-**II. Content Structure**
-Follows a "General → Detail → Scene → Extension" logic, forming a complete cognitive chain across 4 scenes.
-
-**III. Audience Attention**
-- High Attention: 0-5s (Clear visual focus).
-- Drop-off Risk: 10-17s (Product switch lack transition).
-
-**IV. Visual & Audio Strategy**
-- Visual: Tone fits home positioning, dynamic camera movement suggested.
-- Audio: Soothing vibe, suggested to add action-synced sound effects.
-
-**V. Conversion Potential**
-- Strengths: Fits the "Golden 3 Seconds" rule, multiple products cover wide needs.
-- Weaknesses: Core differentiation (e.g., material safety) is under-represented.
-
-**VI. Competitor Insights**
-Could strengthen the "Manicure-friendly" design to target female users precisely.
-
-**VII. Summary & Optimization**
-Suggest adding "Pain point → Solution" logic and key selling point voiceovers.
-
 ## Demo
+
+[Demo screenshots or videos will be placed in the `img/` directory]
 
 ## FAQ
 
