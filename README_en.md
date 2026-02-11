@@ -15,7 +15,7 @@ This project provides the following core capabilities:
 
 ## Agent Architecture
 
-![Video Breakdown Agent with AgentKit Runtime](img/architecture.jpg)
+![Video Breakdown Agent with AgentKit Runtime](assets/architecture_video_breakdown_agent.jpg)
 
 ```text
 User Input (Video URL/Local File)

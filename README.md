@@ -15,7 +15,7 @@
 
 ## Agent 能力
 
-![Video Breakdown Agent with AgentKit Runtime](img/architecture.jpg)
+![Video Breakdown Agent with AgentKit Runtime](assets/architecture_video_breakdown_agent.jpg)
 
 ```text
 用户输入（视频URL/本地文件）
