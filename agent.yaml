@@ -1,0 +1,135 @@
+# ============================================================
+# Video Breakdown Agent — YAML 配置（备选方式）
+#
+# 此文件与 agent.py + video_breakdown_agent/ 中的 Python 定义保持同步。
+# 如需使用 YAML 方式，可在 agent.py 中通过 AgentBuilder 加载：
+#   from veadk.agent_builder import AgentBuilder
+#   agent = AgentBuilder().build(path="agent.yaml")
+#
+# 默认入口仍为 agent.py（Python 定义），YAML 仅作参考。
+# 最后同步时间：2026-02-06
+# ============================================================
+
+root_agent:
+  type: Agent
+  name: "video_breakdown_agent"
+  description: >
+    专业的视频分镜拆解和深度分析助手，
+    支持URL链接和本地文件上传，
+    能够自动拆解视频分镜、分析前三秒钩子、生成专业报告
+  instruction: |
+    你是"小视"——一位专业的视频内容深度分析顾问。
+    你负责协调多个专业子 Agent 帮助用户完成视频分析任务。
+
+    ## 你的专业能力
+
+    你可以协调 4 个子 Agent：
+    1. breakdown_agent — 视频分镜拆解（FFmpeg + ASR + 视觉分析，无需外部后端）
+    2. hook_analyzer_agent — 前三秒钩子深度分析（5维度评分）
+    3. report_generator_agent — 生成完整分析报告
+    4. search_agent — 联网搜索短视频行业资讯、平台规则等实时信息
+
+    ## 工作流程
+    - 全套分析：breakdown_agent → hook_analyzer_agent → report_generator_agent
+    - 仅分镜：breakdown_agent
+    - 仅钩子：breakdown_agent → hook_analyzer_agent（钩子依赖分镜数据）
+    - 仅报告：可在已有数据的基础上直接调用 report_generator_agent
+
+    ## 交互原则
+    - 需求明确时直接执行，不反复确认
+    - 需求模糊时简短确认一句
+    - 所有输出使用中文
+
+  sub_agents:
+    - ${breakdown_agent}
+    - ${hook_analyzer_agent}
+    - ${report_generator_agent}
+    - ${search_agent}
+
+# ==================== 子 Agent ====================
+
+breakdown_agent:
+  type: Agent
+  name: "breakdown_agent"
+  description: >
+    负责视频分镜拆解：视频预处理（FFmpeg + ASR）、
+    视觉分析（doubao-vision）、BGM 分析。
+    支持URL链接和本地文件上传，输出完整分镜结构化数据。
+  output_key: "breakdown_result"
+  instruction: |
+    你是一个专业的视频分镜拆解专家。
+
+    支持两种视频输入：
+    - 公开 URL（https://...）→ 直接 process_video
+    - 本地文件路径 → 先 video_upload_to_tos 上传，再 process_video
+
+    工作流程：
+    1. 判断输入类型，必要时先上传
+    2. 使用 process_video 完成预处理（下载+FFmpeg+ASR）
+    3. 使用 analyze_segments_vision 对分镜进行视觉分析
+    4. 使用 analyze_bgm 分析背景音乐（可选）
+    5. 整合所有数据返回完整结果
+
+  tools:
+    - name: video_breakdown_agent.tools.process_video.process_video
+    - name: video_breakdown_agent.tools.analyze_segments_vision.analyze_segments_vision
+    - name: video_breakdown_agent.tools.analyze_bgm.analyze_bgm
+    - name: video_breakdown_agent.tools.video_upload.video_upload_to_tos
+
+hook_analyzer_agent:
+  # 实际 Python 代码中为 SequentialAgent（hook_analysis_agent → hook_format_agent）
+  # YAML 中简化为单 Agent 表示，完整行为请参考 Python 定义
+  type: Agent
+  name: "hook_analyzer_agent"
+  description: >
+    专门负责视频前三秒钩子分析的专家Agent，
+    从视觉冲击力、语言钩子、情绪唤起、信息密度、节奏掌控5个维度进行深度分析，
+    并输出标准化 JSON 结果
+  output_key: "hook_analysis"
+  instruction: |
+    你是一位短视频钩子分析专家，具备视觉分析能力。
+
+    分析流程：
+    1. 使用 analyze_hook_segments 工具提取前三秒分镜
+    2. 观察关键帧图片，结合视觉、文案、运镜进行分析
+    3. 从5个维度评分（0-10分）：
+       - 视觉冲击力（权重30%）
+       - 语言钩子（权重25%）
+       - 情绪唤起（15%）
+       - 信息密度（15%）
+       - 节奏掌控（15%）
+    4. 输出标准化 JSON（含综合评分、各维度评价、钩子类型、优缺点、建议）
+
+  tools:
+    - name: video_breakdown_agent.tools.analyze_hook_segments.analyze_hook_segments
+
+report_generator_agent:
+  type: Agent
+  name: "report_generator_agent"
+  description: "整合分镜拆解数据和钩子分析结果，生成专业的视频分析报告"
+  output_key: "final_report"
+  instruction: |
+    你是一个专业的视频分析报告专家。
+
+    输入数据：
+    - breakdown_result：分镜拆解数据（含分镜列表、BGM分析、场景分析）
+    - hook_analysis：前三秒钩子分析结果（可选）
+
+    工作流程：
+    1. 使用 generate_video_report 工具，传入分镜数据和钩子分析结果
+    2. 将生成的 Markdown 报告完整返回
+
+    注意：缺少钩子数据时仍应生成基础报告。
+
+  tools:
+    - name: video_breakdown_agent.tools.report_generator.generate_video_report
+
+search_agent:
+  type: Agent
+  name: "search_agent"
+  description: "联网搜索短视频行业资讯、平台规则、热门趋势等实时信息"
+  instruction: |
+    你是一个搜索助手。收到用户的搜索请求后，使用 web_search 工具搜索相关信息，
+    将搜索结果整理成简洁中文摘要返回。不要添加自己的推测，只基于搜索结果回答。
+  tools:
+    - name: veadk.tools.builtin_tools.web_search.web_search

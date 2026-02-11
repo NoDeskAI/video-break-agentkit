@@ -1,0 +1,117 @@
+[metadata]
+name = "智能短视频拆解分析助手"
+name_en = "Video Breakdown Analyzer"
+description = "专业的短视频分镜拆解和深度分析工具，自动生成分镜脚本、前三秒钩子评分和完整分析报告"
+details = """
+这是一个基于火山引擎 AgentKit 构建的智能短视频分析系统。系统采用 Multi-Agent 架构，
+集成 FFmpeg 视频处理、火山 ASR 语音识别、LiteLLM 多模态视觉分析和 TOS 对象存储，
+能够对短视频进行全方位的专业分析。
+
+核心能力：
+- 视频分镜拆解：自动识别视频分镜，提取关键帧并分析画面内容
+- 前三秒钩子分析：从视觉冲击力、语言钩子、情绪唤起等5个维度评分
+- 专业报告生成：整合所有分析数据生成 Markdown 格式专业报告
+- 联网搜索：实时获取短视频行业最新资讯和平台规则
+"""
+
+[tags]
+industry = ["媒体内容", "短视频", "创作者工具"]
+from = "没有桌子人工智能有限公司"  # TODO: 替换为实际企业名称
+framework = "veadk"
+language = "python"
+tech = ["Multi-Agent", "FFmpeg", "ASR", "视觉分析", "TOS存储"]
+type = "application"
+
+[[features]]
+name = "智能分镜拆解"
+desc = "基于 FFmpeg 进行视频预处理，结合火山 ASR 语音识别和 LiteLLM 视觉分析，自动生成结构化分镜数据"
+
+[[features]]
+name = "前三秒钩子深度评分"
+desc = "采用 SequentialAgent 模式，先用视觉模型多模态分析，再用小模型格式化，输出标准化 JSON 评分结果"
+
+[[features]]
+name = "多模型灵活切换"
+desc = "通过 LiteLLM 统一路由支持 Gemini、豆包、GPT-4o 等多种视觉模型，一行配置即可切换"
+
+[[features]]
+name = "优雅降级机制"
+desc = "TOS 上传失败自动回退 base64 编码，ASR 未配置自动跳过语音识别，确保核心功能稳定运行"
+
+[[prompts]]
+text = "帮我拆解这个视频的分镜结构"
+resource_url = ""
+
+[[prompts]]
+text = "分析这个视频前三秒的钩子吸引力，给出专业评分"
+resource_url = ""
+
+[[prompts]]
+text = "生成完整的视频分析报告"
+resource_url = ""
+
+[components]
+knowledgebase = []
+memory = []
+tools = ["TOS"]
+mcp = []
+infra = ["TOS"]
+
+[[envs]]
+name = "火山方舟模型 API Key"
+key = "MODEL_AGENT_API_KEY"
+required = true
+url = "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey"
+
+[[envs]]
+name = "火山引擎访问密钥"
+key = "VOLCENGINE_ACCESS_KEY"
+required = true
+url = "https://console.volcengine.com/iam/keymanage/"
+
+[[envs]]
+name = "火山引擎密钥"
+key = "VOLCENGINE_SECRET_KEY"
+required = true
+url = "https://console.volcengine.com/iam/keymanage/"
+
+[[envs]]
+name = "TOS 存储桶名称"
+key = "DATABASE_TOS_BUCKET"
+required = true
+url = "https://console.volcengine.com/tos/bucket"
+
+[[envs]]
+name = "火山 ASR 应用 ID"
+key = "ASR_APP_ID"
+required = false
+url = "https://console.volcengine.com/speech/service/list"
+
+[[envs]]
+name = "火山 ASR 访问密钥"
+key = "ASR_ACCESS_KEY"
+required = false
+url = "https://console.volcengine.com/speech/service/list"
+
+[[envs]]
+name = "视觉分析模型名称"
+key = "MODEL_VISION_NAME"
+required = false
+url = ""
+default = "doubao-seed-1-6-vision-250815"
+
+[[envs]]
+name = "Google Gemini API Key"
+key = "GEMINI_API_KEY"
+required = false
+url = "https://aistudio.google.com/apikey"
+
+[models]
+primary = "doubao-seed-1-6-251015"
+vision = "doubao-seed-1-6-vision-250815"
+supported = [
+  "doubao-seed-1-6-251015",
+  "doubao-seed-1-6-vision-250815",
+  "gemini/gemini-2.5-pro",
+  "gpt-4o"
+]

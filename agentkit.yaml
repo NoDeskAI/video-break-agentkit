@@ -1,0 +1,20 @@
+common:
+  agent_name: video_breakdown_agent
+  entry_point: agent.py
+  description: ''
+  language: Python
+  language_version: '3.12'
+  agent_type: Basic App
+  dependencies_file: requirements.txt
+  runtime_envs:
+    DATABASE_TOS_BUCKET: video-breakdown-uploads
+    DATABASE_TOS_REGION: cn-beijing
+    FFMPEG_BIN: ffmpeg
+    FFPROBE_BIN: ffprobe
+  launch_type: cloud
+launch_types:
+  cloud:
+    region: cn-beijing
+    build_timeout: 3600
+docker_build:
+  platform: auto

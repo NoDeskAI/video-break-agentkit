@@ -1,0 +1,66 @@
+# Video Breakdown Agent 配置
+# ⚠️ 安全警告：请勿在此文件中填入真实密钥！
+# 所有密钥应通过环境变量或 .env 文件注入
+# 优先级：系统环境变量 > .env 文件 > config.yaml
+# VeADK 会将 YAML 层级扁平化为大写环境变量（model.agent.name → MODEL_AGENT_NAME）
+# 参考: README.md 中的"环境变量配置"章节
+# 参考模板：config.yaml.example
+
+model:
+  agent:
+    provider: openai
+    name: doubao-seed-1-6-251015
+    api_base: https://ark.cn-beijing.volces.com/api/v3/
+    api_key: ""  # 请通过环境变量 MODEL_AGENT_API_KEY 注入
+
+  # ======================== 视觉模型配置 ========================
+  # 用于分镜画面分析（analyze_segments_vision 工具）
+  # 使用豆包官方 vision API（/responses endpoint）
+  # 注意：必须使用完整模型名（含日期后缀），如 doubao-seed-1-6-vision-250815
+  vision:
+    name: doubao-seed-1-6-vision-250815
+    api_base: https://ark.cn-beijing.volces.com/api/v3/
+    api_key: ""  # 请通过环境变量 MODEL_VISION_API_KEY 注入（回退到 MODEL_AGENT_API_KEY）
+
+  # ======================== BGM 分析模型配置 ========================
+  # 用于背景音乐分析（analyze_bgm 工具）
+  # 使用豆包文本模型（与主 Agent 模型一致）
+  bgm:
+    name: doubao-seed-1-6-251015
+    api_base: https://ark.cn-beijing.volces.com/api/v3/
+    api_key: ""  # 请通过环境变量 MODEL_BGM_API_KEY 注入（回退到 MODEL_AGENT_API_KEY）
+
+  format:
+    name: doubao-seed-1-6-251015
+
+volcengine:
+  access_key: ""  # 请通过环境变量 VOLCENGINE_ACCESS_KEY 注入
+  secret_key: ""  # 请通过环境变量 VOLCENGINE_SECRET_KEY 注入
+
+database:
+  tos:
+    bucket: video-breakdown-uploads
+    region: cn-beijing
+
+# FFmpeg 配置（已通过 imageio-ffmpeg 自动打包，无需手动安装；如有系统 FFmpeg 会优先使用）
+ffmpeg:
+  bin: ffmpeg
+  ffprobe_bin: ffprobe
+  frames_per_segment: 3           # 每个分镜采样帧数（Gemini 2.5 Pro 支持更多图片）
+  media_temp_dir: ./.media-cache
+
+# 火山 ASR 配置（未配置时跳过语音识别）
+asr:
+  app_id:                                  # 通过 .env 或环境变量注入
+  access_key:                              # 通过 .env 或环境变量注入
+  resource_id: volc.bigasr.auc
+
+thinking:
+  root_agent: disabled
+  breakdown_agent: disabled
+  hook_analyzer_agent: disabled
+  hook_format_agent: disabled
+  report_agent: disabled
+
+logging:
+  level: INFO
