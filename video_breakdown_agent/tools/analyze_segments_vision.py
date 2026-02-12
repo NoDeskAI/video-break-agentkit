@@ -4,13 +4,14 @@
 
 迁移来源: video-breakdown-master/app/services/gemini_service.py
 """
+
 from __future__ import annotations
 
 import asyncio
 import json
 import logging
 import os
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 from google.adk.tools import ToolContext
 from video_breakdown_agent.utils.doubao_client import call_doubao_vision
@@ -19,10 +20,25 @@ logger = logging.getLogger(__name__)
 
 # 功能标签枚举（来自 enhance_prompts.py）
 FUNCTION_TAG_OPTIONS = [
-    "强钩子", "痛点切入", "问题澄清", "解决方案", "产品介绍",
-    "信任建立", "产品展示", "价值预告", "过渡", "价值输出",
-    "成分深挖", "效果证明", "用户证言", "情感背书", "价值强化",
-    "效果总结", "双重收益", "强CTA", "行动召唤",
+    "强钩子",
+    "痛点切入",
+    "问题澄清",
+    "解决方案",
+    "产品介绍",
+    "信任建立",
+    "产品展示",
+    "价值预告",
+    "过渡",
+    "价值输出",
+    "成分深挖",
+    "效果证明",
+    "用户证言",
+    "情感背书",
+    "价值强化",
+    "效果总结",
+    "双重收益",
+    "强CTA",
+    "行动召唤",
 ]
 
 
@@ -78,19 +94,52 @@ def _build_segment_prompt(segment: Dict[str, Any]) -> Dict[str, Any]:
                 "视觉表现": {
                     "type": "object",
                     "properties": {
-                        "景别": {"type": "string", "enum": ["特写", "近景", "中景", "全景", "远景"]},
-                        "运镜": {"type": "string", "enum": ["固定", "推镜", "拉镜", "摇镜", "移镜", "跟随", "环绕", "推拉"]},
+                        "景别": {
+                            "type": "string",
+                            "enum": ["特写", "近景", "中景", "全景", "远景"],
+                        },
+                        "运镜": {
+                            "type": "string",
+                            "enum": [
+                                "固定",
+                                "推镜",
+                                "拉镜",
+                                "摇镜",
+                                "移镜",
+                                "跟随",
+                                "环绕",
+                                "推拉",
+                            ],
+                        },
                         "画面内容": {"type": "string"},
                     },
                     "required": ["景别", "运镜", "画面内容"],
                 },
                 "语音类型": {"type": "string", "enum": ["口播", "旁白"]},
                 "summary": {"type": "string"},
-                "画面小标题": {"type": "string", "description": "画面核心要点，≤10个汉字"},
-                "内容标签": {"type": "array", "items": {"type": "string"}, "description": "1-2个内容关键标签"},
-                "功能标签": {"type": "string", "enum": FUNCTION_TAG_OPTIONS, "description": "该片段在视频叙事中的功能角色"},
+                "画面小标题": {
+                    "type": "string",
+                    "description": "画面核心要点，≤10个汉字",
+                },
+                "内容标签": {
+                    "type": "array",
+                    "items": {"type": "string"},
+                    "description": "1-2个内容关键标签",
+                },
+                "功能标签": {
+                    "type": "string",
+                    "enum": FUNCTION_TAG_OPTIONS,
+                    "description": "该片段在视频叙事中的功能角色",
+                },
             },
-            "required": ["视觉表现", "语音类型", "summary", "画面小标题", "内容标签", "功能标签"],
+            "required": [
+                "视觉表现",
+                "语音类型",
+                "summary",
+                "画面小标题",
+                "内容标签",
+                "功能标签",
+            ],
         },
     }
 
@@ -129,8 +178,6 @@ def _strip_code_fence(text: str) -> str:
     return text.strip()
 
 
-
-
 async def _analyze_single_segment(
     segment: Dict[str, Any],
     model_name: str,
@@ -147,8 +194,12 @@ async def _analyze_single_segment(
         {
             "role": "user",
             "content": [
-                {"type": "text", "text": json.dumps(prompt_data["instruction"], ensure_ascii=False)},
-            ] + [
+                {
+                    "type": "text",
+                    "text": json.dumps(prompt_data["instruction"], ensure_ascii=False),
+                },
+            ]
+            + [
                 {"type": "image_url", "image_url": {"url": url}}
                 for url in segment.get("frame_urls", [])[:6]
             ],
@@ -194,7 +245,9 @@ async def _analyze_single_segment(
 
         except Exception as exc:
             last_error = exc
-            logger.warning(f"分镜 {segment['index']} 分析失败 (尝试 {attempt + 1}/{max_retries}): {exc}")
+            logger.warning(
+                f"分镜 {segment['index']} 分析失败 (尝试 {attempt + 1}/{max_retries}): {exc}"
+            )
             if attempt < max_retries - 1:
                 await asyncio.sleep(1 + attempt)
 
@@ -202,7 +255,9 @@ async def _analyze_single_segment(
     return _create_fallback(segment)
 
 
-async def analyze_segments_vision(segments_json: str = "", tool_context: ToolContext = None) -> str:
+async def analyze_segments_vision(
+    segments_json: str = "", tool_context: ToolContext = None
+) -> str:
     """
     使用视觉模型分析每个分镜的画面内容、景别、运镜、功能标签。
     通过 LiteLLM 统一路由，支持 Gemini / 豆包 / GPT-4o 等多种模型。
@@ -226,21 +281,33 @@ async def analyze_segments_vision(segments_json: str = "", tool_context: ToolCon
         state_result = tool_context.state.get("process_video_result")
         if state_result and isinstance(state_result, dict):
             segments = state_result.get("segments", [])
-            logger.info(f"[analyze_segments_vision] 从 session state 读取 {len(segments)} 个分镜")
+            logger.info(
+                f"[analyze_segments_vision] 从 session state 读取 {len(segments)} 个分镜"
+            )
 
     # 回退：从参数解析
     if not segments and segments_json:
         try:
-            parsed = json.loads(segments_json) if isinstance(segments_json, str) else segments_json
+            parsed = (
+                json.loads(segments_json)
+                if isinstance(segments_json, str)
+                else segments_json
+            )
             if isinstance(parsed, dict):
                 segments = parsed.get("segments", [])
             elif isinstance(parsed, list):
                 segments = parsed
         except json.JSONDecodeError:
-            return json.dumps({"error": "segments_json 格式无效，需要合法 JSON 数组"}, ensure_ascii=False)
+            return json.dumps(
+                {"error": "segments_json 格式无效，需要合法 JSON 数组"},
+                ensure_ascii=False,
+            )
 
     if not segments or not isinstance(segments, list) or len(segments) == 0:
-        return json.dumps({"error": "没有可用的分镜数据。请先调用 process_video 处理视频。"}, ensure_ascii=False)
+        return json.dumps(
+            {"error": "没有可用的分镜数据。请先调用 process_video 处理视频。"},
+            ensure_ascii=False,
+        )
 
     # ---- 读取模型配置 ----
     # LiteLLM 模型名约定：
@@ -248,9 +315,8 @@ async def analyze_segments_vision(segments_json: str = "", tool_context: ToolCon
     #   openai/gemini-2.5-pro      → OpenAI 兼容代理（如 OneRouter）
     #   doubao-seed-1-6-251015     → 火山方舟 (需 api_base + api_key)
     #   gpt-4o                     → OpenAI
-    model_name = (
-        os.getenv("MODEL_VISION_NAME")
-        or os.getenv("MODEL_AGENT_NAME", "doubao-seed-1-6-vision")
+    model_name = os.getenv("MODEL_VISION_NAME") or os.getenv(
+        "MODEL_AGENT_NAME", "doubao-seed-1-6-vision"
     )
     api_key = (
         os.getenv("MODEL_VISION_API_KEY")
@@ -265,14 +331,19 @@ async def analyze_segments_vision(segments_json: str = "", tool_context: ToolCon
     )
 
     if not api_key:
-        return json.dumps({
-            "error": "缺少 API Key，请配置 MODEL_VISION_API_KEY / GEMINI_API_KEY / MODEL_AGENT_API_KEY"
-        }, ensure_ascii=False)
+        return json.dumps(
+            {
+                "error": "缺少 API Key，请配置 MODEL_VISION_API_KEY / GEMINI_API_KEY / MODEL_AGENT_API_KEY"
+            },
+            ensure_ascii=False,
+        )
 
     # 过滤：只分析有帧图片的分镜
     segments_with_frames = [s for s in segments if s.get("frame_urls")]
     if not segments_with_frames:
-        return json.dumps({"error": "没有分镜包含帧图片URL，无法进行视觉分析"}, ensure_ascii=False)
+        return json.dumps(
+            {"error": "没有分镜包含帧图片URL，无法进行视觉分析"}, ensure_ascii=False
+        )
 
     logger.info(
         f"[analyze_segments_vision] 开始分析 {len(segments_with_frames)} 个分镜 (model={model_name})"
@@ -316,6 +387,8 @@ async def analyze_segments_vision(segments_json: str = "", tool_context: ToolCon
                 "（base64图片已省略）" if url and url.startswith("data:") else url
                 for url in frame_urls
             ]
-            logger.debug(f"分镜 {result['index']} 精简 frame_urls: {len(frame_urls)} 帧 → 占位符")
+            logger.debug(
+                f"分镜 {result['index']} 精简 frame_urls: {len(frame_urls)} 帧 → 占位符"
+            )
 
     return json.dumps(valid_results, ensure_ascii=False)

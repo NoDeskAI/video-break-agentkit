@@ -3,6 +3,7 @@
 兼容新格式（process_video + analyze_segments_vision 输出）和旧格式
 支持从 tool_context.state 读取完整的 base64 frame_urls
 """
+
 import logging
 from typing import Dict, List
 
@@ -45,7 +46,9 @@ def analyze_hook_segments(tool_context: ToolContext = None) -> dict:
         vision_result = tool_context.state.get("vision_analysis_result")
         if vision_result and isinstance(vision_result, list):
             segments = vision_result
-            logger.info(f"[analyze_hook_segments] 从 session state 读取完整数据: {len(segments)} 个分镜")
+            logger.info(
+                f"[analyze_hook_segments] 从 session state 读取完整数据: {len(segments)} 个分镜"
+            )
 
         if not segments:
             pv = tool_context.state.get("process_video_result")
@@ -54,7 +57,7 @@ def analyze_hook_segments(tool_context: ToolContext = None) -> dict:
                 logger.info(
                     f"[analyze_hook_segments] vision_analysis_result 缺失，回退到 process_video_result: {len(segments)} 个分镜"
                 )
-    
+
     if not segments:
         return {
             "error": "没有分镜数据",

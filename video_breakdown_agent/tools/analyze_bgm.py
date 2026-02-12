@@ -5,12 +5,13 @@ BGM 音频分析工具（自包含）
 
 迁移来源: video-breakdown-master/app/services/bgm_service.py
 """
+
 from __future__ import annotations
 
 import json
 import logging
 import os
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 from google.adk.tools import ToolContext
 from video_breakdown_agent.utils.doubao_client import call_doubao_text
@@ -20,15 +21,45 @@ logger = logging.getLogger(__name__)
 # ==================== 枚举常量（来自 bgm_prompts.py）====================
 
 MUSIC_STYLE_OPTIONS = [
-    "流行", "摇滚", "电子", "古典", "爵士", "民谣", "R&B", "嘻哈",
-    "乡村", "蓝调", "雷鬼", "金属", "朋克", "独立", "氛围",
-    "新世纪", "世界音乐", "原声配乐", "轻音乐", "纯音乐",
+    "流行",
+    "摇滚",
+    "电子",
+    "古典",
+    "爵士",
+    "民谣",
+    "R&B",
+    "嘻哈",
+    "乡村",
+    "蓝调",
+    "雷鬼",
+    "金属",
+    "朋克",
+    "独立",
+    "氛围",
+    "新世纪",
+    "世界音乐",
+    "原声配乐",
+    "轻音乐",
+    "纯音乐",
 ]
 
 EMOTION_OPTIONS = [
-    "轻松愉悦", "积极向上", "温馨感人", "激昂励志", "浪漫甜蜜", "活力四射", "欢快热闹",
-    "平静舒缓", "神秘悬疑", "史诗宏大", "梦幻空灵", "复古怀旧",
-    "紧张刺激", "悲伤忧郁", "阴郁压抑", "恐怖惊悚",
+    "轻松愉悦",
+    "积极向上",
+    "温馨感人",
+    "激昂励志",
+    "浪漫甜蜜",
+    "活力四射",
+    "欢快热闹",
+    "平静舒缓",
+    "神秘悬疑",
+    "史诗宏大",
+    "梦幻空灵",
+    "复古怀旧",
+    "紧张刺激",
+    "悲伤忧郁",
+    "阴郁压抑",
+    "恐怖惊悚",
 ]
 
 
@@ -56,9 +87,9 @@ def _get_empty_result() -> Dict[str, Any]:
     }
 
 
-
-
-async def analyze_bgm(audio_url: str = "", duration: float = 0.0, tool_context: ToolContext = None) -> dict:
+async def analyze_bgm(
+    audio_url: str = "", duration: float = 0.0, tool_context: ToolContext = None
+) -> dict:
     """
     分析视频的背景音乐（BGM），识别风格、情绪、乐器、节奏等特征。
     通过 LiteLLM 统一路由，需要模型支持音频输入（input_audio），
@@ -201,7 +232,7 @@ async def analyze_bgm(audio_url: str = "", duration: float = 0.0, tool_context: 
         {"role": "user", "content": user_prompt},
     ]
 
-    schema = {
+    _schema = {  # noqa: F841  # 保留作为 BGM 输出格式参考
         "name": "bgm_analysis_schema",
         "schema": {
             "type": "object",
@@ -247,7 +278,9 @@ async def analyze_bgm(audio_url: str = "", duration: float = 0.0, tool_context: 
     }
 
     try:
-        logger.info(f"[analyze_bgm] 调用豆包模型 {model_name} 分析 BGM（音频分析当前仅以描述为主）...")
+        logger.info(
+            f"[analyze_bgm] 调用豆包模型 {model_name} 分析 BGM（音频分析当前仅以描述为主）..."
+        )
         response = await call_doubao_text(
             model=model_name,
             messages=messages,

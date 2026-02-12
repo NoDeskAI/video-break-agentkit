@@ -6,6 +6,7 @@
 2. 使用 LLM 将输出重写为用户可读 Markdown；
 3. 不干预工具调用 envelope，避免破坏编排。
 """
+
 from __future__ import annotations
 
 import os
@@ -105,7 +106,9 @@ def _call_repair_llm(raw_text: str) -> Optional[str]:
         return None
 
     model = os.getenv("MODEL_AGENT_NAME", "doubao-seed-1-6-251015")
-    api_base = os.getenv("MODEL_AGENT_API_BASE", "https://ark.cn-beijing.volces.com/api/v3/")
+    api_base = os.getenv(
+        "MODEL_AGENT_API_BASE", "https://ark.cn-beijing.volces.com/api/v3/"
+    )
     api_base = api_base.rstrip("/")
     url = f"{api_base}/chat/completions"
 
@@ -174,4 +177,3 @@ def guard_final_user_output(
         llm_response.content.parts[0].text = repaired
         logger.info("[final_output_guard] repaired leaked intermediate output by llm")
     return llm_response
-

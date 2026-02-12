@@ -4,6 +4,7 @@
 VeADK 约束：有 sub_agents 的 Agent 不支持直接挂载 tools，
 因此 web_search 等工具封装为独立子 Agent。
 """
+
 import logging
 import os
 
@@ -17,9 +18,14 @@ from .hook.search_output_hook import suppress_search_agent_user_output
 from .hook.video_upload_hook import hook_video_upload
 from .prompt import ROOT_AGENT_INSTRUCTION
 from .sub_agents.breakdown_agent.prompt import BREAKDOWN_AGENT_INSTRUCTION
-from .sub_agents.hook_analyzer_agent.prompt import HOOK_ANALYZER_INSTRUCTION, HOOK_FORMAT_INSTRUCTION
+from .sub_agents.hook_analyzer_agent.prompt import (
+    HOOK_ANALYZER_INSTRUCTION,
+    HOOK_FORMAT_INSTRUCTION,
+)
 from .sub_agents.report_generator_agent.prompt import REPORT_AGENT_INSTRUCTION
-from .sub_agents.report_generator_agent.direct_output_callback import direct_output_callback
+from .sub_agents.report_generator_agent.direct_output_callback import (
+    direct_output_callback,
+)
 from .hook.format_hook import soft_fix_hook_output
 from .tools.process_video import process_video
 from .tools.analyze_segments_vision import analyze_segments_vision
@@ -38,6 +44,7 @@ shield_callbacks = {}
 if os.getenv("TOOL_LLM_SHIELD_APP_ID"):
     try:
         from veadk.tools.builtin_tools.llm_shield import content_safety
+
         shield_callbacks = {
             "before_model_callback": content_safety.before_model_callback,
             "after_model_callback": content_safety.after_model_callback,
@@ -116,7 +123,9 @@ def create_hook_analyzer_agent() -> SequentialAgent:
         tools=[analyze_hook_segments],
         model_extra_config={
             "extra_body": {
-                "thinking": {"type": os.getenv("THINKING_HOOK_ANALYZER_AGENT", "disabled")}
+                "thinking": {
+                    "type": os.getenv("THINKING_HOOK_ANALYZER_AGENT", "disabled")
+                }
             }
         },
     )
@@ -131,7 +140,9 @@ def create_hook_analyzer_agent() -> SequentialAgent:
         after_model_callback=[soft_fix_hook_output],
         model_extra_config={
             "extra_body": {
-                "thinking": {"type": os.getenv("THINKING_HOOK_FORMAT_AGENT", "disabled")}
+                "thinking": {
+                    "type": os.getenv("THINKING_HOOK_FORMAT_AGENT", "disabled")
+                }
             }
         },
     )
@@ -164,7 +175,11 @@ def create_report_generator_agent() -> Agent:
 full_analysis_pipeline = SequentialAgent(
     name="full_analysis_pipeline",
     description="完整分析生产线：分镜拆解 -> 钩子分析 -> 报告生成",
-    sub_agents=[create_breakdown_agent(), create_hook_analyzer_agent(), create_report_generator_agent()],
+    sub_agents=[
+        create_breakdown_agent(),
+        create_hook_analyzer_agent(),
+        create_report_generator_agent(),
+    ],
 )
 
 hook_only_pipeline = SequentialAgent(

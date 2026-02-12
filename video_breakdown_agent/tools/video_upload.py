@@ -2,6 +2,7 @@
 视频文件上传到 TOS 对象存储工具
 基于 inspection_assistant/tools/tos_upload.py 模式实现
 """
+
 import logging
 import os
 from datetime import datetime
@@ -35,7 +36,9 @@ def video_upload_to_tos(
     """
     # 从环境变量/config.yaml 读取配置（VeADK 扁平化: DATABASE_TOS_*，兼容旧: TOS_*）
     if bucket_name is None:
-        bucket_name = os.getenv("DATABASE_TOS_BUCKET") or os.getenv("TOS_BUCKET", DEFAULT_BUCKET)
+        bucket_name = os.getenv("DATABASE_TOS_BUCKET") or os.getenv(
+            "TOS_BUCKET", DEFAULT_BUCKET
+        )
     region = os.getenv("DATABASE_TOS_REGION") or os.getenv("TOS_REGION", DEFAULT_REGION)
 
     # 检查文件是否存在
@@ -59,6 +62,7 @@ def video_upload_to_tos(
     if not (access_key and secret_key):
         try:
             from veadk.auth.veauth.utils import get_credential_from_vefaas_iam
+
             cred = get_credential_from_vefaas_iam()
             access_key = cred.access_key_id
             secret_key = cred.secret_access_key

@@ -9,6 +9,7 @@
   - input content 类型：input_text / input_image（非 text / image_url）
   - 参考：https://www.volcengine.com/docs/82379/1541595
 """
+
 import json
 import logging
 import os
@@ -82,10 +83,12 @@ class DoubaoClient:
             response = await self.client.post(url, headers=headers, json=payload)
             response.raise_for_status()
             result = response.json()
-            logger.debug(f"豆包文本 API 响应成功")
+            logger.debug("豆包文本 API 响应成功")
             return result
         except httpx.HTTPStatusError as e:
-            logger.error(f"豆包文本 API HTTP 错误: {e.response.status_code} - {e.response.text}")
+            logger.error(
+                f"豆包文本 API HTTP 错误: {e.response.status_code} - {e.response.text}"
+            )
             raise
         except Exception as e:
             logger.error(f"豆包文本 API 调用失败: {e}")
@@ -148,7 +151,9 @@ class DoubaoClient:
             # 转换为统一的 OpenAI 格式
             return self._convert_vision_response(raw)
         except httpx.HTTPStatusError as e:
-            logger.error(f"豆包视觉 API HTTP 错误: {e.response.status_code} - {e.response.text}")
+            logger.error(
+                f"豆包视觉 API HTTP 错误: {e.response.status_code} - {e.response.text}"
+            )
             raise
         except Exception as e:
             logger.error(f"豆包视觉 API 调用失败: {e}")
@@ -157,7 +162,9 @@ class DoubaoClient:
     # ==================== 格式转换 ====================
 
     @staticmethod
-    def _convert_messages_to_doubao_input(messages: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _convert_messages_to_doubao_input(
+        messages: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
         """
         将标准 OpenAI messages 转换为豆包 Responses API 的 input 格式
 
@@ -175,18 +182,24 @@ class DoubaoClient:
             # system message → 转为 user 的 input_text（豆包 vision API 可能不支持 system role）
             if role == "system":
                 if isinstance(content, str):
-                    doubao_input.append({
-                        "role": "user",
-                        "content": [{"type": "input_text", "text": f"[系统提示] {content}"}],
-                    })
+                    doubao_input.append(
+                        {
+                            "role": "user",
+                            "content": [
+                                {"type": "input_text", "text": f"[系统提示] {content}"}
+                            ],
+                        }
+                    )
                 continue
 
             # content 是纯字符串
             if isinstance(content, str):
-                doubao_input.append({
-                    "role": role,
-                    "content": [{"type": "input_text", "text": content}],
-                })
+                doubao_input.append(
+                    {
+                        "role": role,
+                        "content": [{"type": "input_text", "text": content}],
+                    }
+                )
                 continue
 
             # content 是列表（多模态内容）
@@ -195,26 +208,34 @@ class DoubaoClient:
                 item_type = item.get("type", "")
 
                 if item_type == "text":
-                    doubao_content.append({
-                        "type": "input_text",
-                        "text": item["text"],
-                    })
+                    doubao_content.append(
+                        {
+                            "type": "input_text",
+                            "text": item["text"],
+                        }
+                    )
                 elif item_type == "image_url":
                     # 提取 URL（OpenAI 格式可能是 {"url": "..."} 或字符串）
                     url_data = item.get("image_url")
-                    url = url_data.get("url") if isinstance(url_data, dict) else url_data
-                    doubao_content.append({
-                        "type": "input_image",
-                        "image_url": url,
-                    })
+                    url = (
+                        url_data.get("url") if isinstance(url_data, dict) else url_data
+                    )
+                    doubao_content.append(
+                        {
+                            "type": "input_image",
+                            "image_url": url,
+                        }
+                    )
                 else:
                     # 未知类型保持原样
                     doubao_content.append(item)
 
-            doubao_input.append({
-                "role": role,
-                "content": doubao_content,
-            })
+            doubao_input.append(
+                {
+                    "role": role,
+                    "content": doubao_content,
+                }
+            )
 
         return doubao_input
 
@@ -270,7 +291,9 @@ class DoubaoClient:
         # 最终兜底
         if not content_text:
             content_text = json.dumps(raw, ensure_ascii=False)
-            logger.warning(f"豆包视觉 API 响应中未找到 message 内容，完整响应: {content_text[:300]}")
+            logger.warning(
+                f"豆包视觉 API 响应中未找到 message 内容，完整响应: {content_text[:300]}"
+            )
 
         # 提取 usage
         usage = raw.get("usage", {})
@@ -317,7 +340,9 @@ async def call_doubao_text(
         if not api_key:
             raise ValueError("API Key 未提供，且环境变量 MODEL_AGENT_API_KEY 未设置")
     if not api_base:
-        api_base = os.getenv("MODEL_AGENT_API_BASE", "https://ark.cn-beijing.volces.com/api/v3")
+        api_base = os.getenv(
+            "MODEL_AGENT_API_BASE", "https://ark.cn-beijing.volces.com/api/v3"
+        )
 
     async with DoubaoClient(api_key=api_key, api_base=api_base) as client:
         return await client.text_completion(model=model, messages=messages, **kwargs)
@@ -336,7 +361,9 @@ async def call_doubao_vision(
         if not api_key:
             raise ValueError("API Key 未提供，且环境变量 MODEL_VISION_API_KEY 未设置")
     if not api_base:
-        api_base = os.getenv("MODEL_VISION_API_BASE", "https://ark.cn-beijing.volces.com/api/v3")
+        api_base = os.getenv(
+            "MODEL_VISION_API_BASE", "https://ark.cn-beijing.volces.com/api/v3"
+        )
 
     async with DoubaoClient(api_key=api_key, api_base=api_base) as client:
         return await client.vision_completion(model=model, messages=messages, **kwargs)

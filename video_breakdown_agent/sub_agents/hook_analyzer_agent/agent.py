@@ -5,6 +5,7 @@
 1. hook_analyzer_agent — 使用 vision 模型进行多模态分析
 2. after_model_callback 仅做宽松输出修复，不做刚性 schema 校验
 """
+
 import os
 
 from veadk import Agent
@@ -12,7 +13,7 @@ from veadk.agents.sequential_agent import SequentialAgent
 
 from video_breakdown_agent.hook.format_hook import soft_fix_hook_output
 from video_breakdown_agent.tools.analyze_hook_segments import analyze_hook_segments
-from video_breakdown_agent.utils.types import HookAnalysis, json_response_config
+from video_breakdown_agent.utils.types import json_response_config
 from .prompt import HOOK_ANALYZER_INSTRUCTION, HOOK_FORMAT_INSTRUCTION
 
 # 第一阶段：多模态视觉分析（使用 vision 模型）

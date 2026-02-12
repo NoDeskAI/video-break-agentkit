@@ -46,7 +46,8 @@ def generate_video_report(breakdown_data: dict, hook_analysis: dict = None) -> s
     video_style = scene.get("video_style", {}).get("overall", "N/A") if scene else "N/A"
     target_audience = (
         ", ".join(scene.get("video_style", {}).get("target_audience", []))
-        if scene else "N/A"
+        if scene
+        else "N/A"
     )
 
     hook_section = _build_hook_section(hook_analysis)
@@ -88,7 +89,7 @@ def generate_video_report(breakdown_data: dict, hook_analysis: dict = None) -> s
 
 ---
 
-**报告生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**报告生成时间**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 """
     return report
 
@@ -103,21 +104,24 @@ def _build_hook_section(hook_analysis: dict) -> str:
 
     scores_table = f"""| 维度 | 得分 | 评价 |
 |------|------|------|
-| 视觉冲击力 | {hook_analysis.get('visual_impact', 0)}/10 | {hook_analysis.get('visual_comment', '')} |
-| 语言钩子 | {hook_analysis.get('language_hook', 0)}/10 | {hook_analysis.get('language_comment', '')} |
-| 情绪唤起 | {hook_analysis.get('emotion_trigger', 0)}/10 | {hook_analysis.get('emotion_comment', '')} |
-| 信息密度 | {hook_analysis.get('information_density', 0)}/10 | {hook_analysis.get('info_comment', '')} |
-| 节奏掌控 | {hook_analysis.get('rhythm_control', 0)}/10 | {hook_analysis.get('rhythm_comment', '')} |"""
+| 视觉冲击力 | {hook_analysis.get("visual_impact", 0)}/10 | {hook_analysis.get("visual_comment", "")} |
+| 语言钩子 | {hook_analysis.get("language_hook", 0)}/10 | {hook_analysis.get("language_comment", "")} |
+| 情绪唤起 | {hook_analysis.get("emotion_trigger", 0)}/10 | {hook_analysis.get("emotion_comment", "")} |
+| 信息密度 | {hook_analysis.get("information_density", 0)}/10 | {hook_analysis.get("info_comment", "")} |
+| 节奏掌控 | {hook_analysis.get("rhythm_control", 0)}/10 | {hook_analysis.get("rhythm_comment", "")} |"""
 
     strengths = hook_analysis.get("strengths", [])
     weaknesses = hook_analysis.get("weaknesses", [])
     suggestions = hook_analysis.get("suggestions", [])
 
     strengths_text = "\n".join(f"- {s}" for s in strengths) if strengths else "- 暂无"
-    weaknesses_text = "\n".join(f"- {w}" for w in weaknesses) if weaknesses else "- 暂无"
+    weaknesses_text = (
+        "\n".join(f"- {w}" for w in weaknesses) if weaknesses else "- 暂无"
+    )
     suggestions_text = (
         "\n".join(f"{i + 1}. {s}" for i, s in enumerate(suggestions))
-        if suggestions else "1. 暂无"
+        if suggestions
+        else "1. 暂无"
     )
 
     return f"""## 前三秒钩子分析（核心）

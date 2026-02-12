@@ -22,18 +22,29 @@ import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 import httpx
 
 
 def _run_command(cmd: List[str]) -> str:
-    process = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True)
+    process = subprocess.run(
+        cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=True
+    )
     return process.stdout.strip()
 
 
 def _probe_video(ffprobe_bin: str, video_path: Path) -> Dict[str, Any]:
-    cmd = [ffprobe_bin, "-v", "error", "-print_format", "json", "-show_format", "-show_streams", str(video_path)]
+    cmd = [
+        ffprobe_bin,
+        "-v",
+        "error",
+        "-print_format",
+        "json",
+        "-show_format",
+        "-show_streams",
+        str(video_path),
+    ]
     result = _run_command(cmd)
     info = json.loads(result) if result else {}
     fmt = info.get("format") or {}
@@ -43,7 +54,13 @@ def _probe_video(ffprobe_bin: str, video_path: Path) -> Dict[str, Any]:
         if s.get("codec_type") == "video":
             w, h, fr = s.get("width"), s.get("height"), s.get("r_frame_rate")
             break
-    return {"duration": duration, "width": w, "height": h, "frame_rate": fr, "size": fmt.get("size")}
+    return {
+        "duration": duration,
+        "width": w,
+        "height": h,
+        "frame_rate": fr,
+        "size": fmt.get("size"),
+    }
 
 
 def _build_segments(duration: float):
@@ -81,7 +98,19 @@ def _extract_frames(ffmpeg_bin: str, video_path: Path, segments, fps=3):
             offset = min(seg["start"] + ratio * dur, seg["end"] - 0.1)
             offset = max(offset, seg["start"])
             out = frames_dir / f"seg{seg['index']:03d}_frame_{i}.jpg"
-            cmd = [ffmpeg_bin, "-y", "-ss", f"{offset:.2f}", "-i", str(video_path), "-frames:v", "1", "-q:v", "5", str(out)]
+            cmd = [
+                ffmpeg_bin,
+                "-y",
+                "-ss",
+                f"{offset:.2f}",
+                "-i",
+                str(video_path),
+                "-frames:v",
+                "1",
+                "-q:v",
+                "5",
+                str(out),
+            ]
             try:
                 _run_command(cmd)
                 if out.exists():
@@ -99,14 +128,14 @@ async def main(video_url: str):
 
     try:
         # Download
-        print(f"[1/4] 下载视频...", file=sys.stderr)
+        print("[1/4] 下载视频...", file=sys.stderr)
         async with httpx.AsyncClient(timeout=300, follow_redirects=True) as c:
             r = await c.get(video_url)
             r.raise_for_status()
             local_video.write_bytes(r.content)
 
         # Metadata
-        print(f"[2/4] 提取元数据...", file=sys.stderr)
+        print("[2/4] 提取元数据...", file=sys.stderr)
         meta = _probe_video(ffprobe_bin, local_video)
         dur = meta["duration"]
         if dur <= 0:
@@ -118,7 +147,7 @@ async def main(video_url: str):
         segments = _build_segments(dur)
 
         # Frames
-        print(f"[4/4] 提取关键帧...", file=sys.stderr)
+        print("[4/4] 提取关键帧...", file=sys.stderr)
         _extract_frames(ffmpeg_bin, local_video, segments)
 
         result = {

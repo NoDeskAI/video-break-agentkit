@@ -24,7 +24,9 @@ def suppress_search_agent_user_output(
     search_agent 只做检索与回传，不直接面向用户输出正文。
     将其文本暂存到 state，最终由 root agent 统一输出一次，避免重复回复。
     """
-    agent_name = getattr(getattr(callback_context, "_invocation_context", None), "agent", None)
+    agent_name = getattr(
+        getattr(callback_context, "_invocation_context", None), "agent", None
+    )
     if not agent_name or getattr(agent_name, "name", "") != "search_agent":
         return llm_response
 
@@ -42,4 +44,3 @@ def suppress_search_agent_user_output(
     # 清空 search_agent 的用户可见输出，避免与 root 最终答复重复展示。
     llm_response.content.parts[0].text = ""
     return llm_response
-

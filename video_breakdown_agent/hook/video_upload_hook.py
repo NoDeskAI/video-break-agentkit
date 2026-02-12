@@ -13,11 +13,11 @@
 
 参考实现: ad_video_gen_seq/app/market/hook.py → hook_inline_data_transform
 """
+
 from __future__ import annotations
 
 import logging
 import os
-import tempfile
 import uuid
 from datetime import datetime
 from pathlib import Path
@@ -30,8 +30,14 @@ logger = logging.getLogger(__name__)
 
 # 支持的视频 MIME 类型
 VIDEO_MIME_TYPES = {
-    "video/mp4", "video/quicktime", "video/x-msvideo", "video/webm",
-    "video/x-matroska", "video/mpeg", "video/3gpp", "video/x-flv",
+    "video/mp4",
+    "video/quicktime",
+    "video/x-msvideo",
+    "video/webm",
+    "video/x-matroska",
+    "video/mpeg",
+    "video/3gpp",
+    "video/x-flv",
     "application/octet-stream",  # 某些浏览器上传时 MIME 可能不精确
 }
 
@@ -51,6 +57,7 @@ def _try_upload_to_tos(local_path: str) -> Optional[str]:
         if not ak or not sk:
             try:
                 from veadk.auth.veauth.utils import get_credential_from_vefaas_iam
+
                 cred = get_credential_from_vefaas_iam()
                 ak = cred.access_key_id
                 sk = cred.secret_access_key
@@ -60,8 +67,12 @@ def _try_upload_to_tos(local_path: str) -> Optional[str]:
         if not ak or not sk:
             return None
 
-        bucket = os.getenv("DATABASE_TOS_BUCKET") or os.getenv("TOS_BUCKET", "video-breakdown-uploads")
-        region = os.getenv("DATABASE_TOS_REGION") or os.getenv("TOS_REGION", "cn-beijing")
+        bucket = os.getenv("DATABASE_TOS_BUCKET") or os.getenv(
+            "TOS_BUCKET", "video-breakdown-uploads"
+        )
+        region = os.getenv("DATABASE_TOS_REGION") or os.getenv(
+            "TOS_REGION", "cn-beijing"
+        )
         endpoint = f"tos-{region}.volces.com"
 
         client = tos.TosClientV2(ak=ak, sk=sk, endpoint=endpoint, region=region)
@@ -142,11 +153,7 @@ def hook_video_upload(
             tos_url = _try_upload_to_tos(str(local_path))
 
             if tos_url:
-                new_parts.append(
-                    types.Part(
-                        text=f"用户上传了视频文件，URL: {tos_url}"
-                    )
-                )
+                new_parts.append(types.Part(text=f"用户上传了视频文件，URL: {tos_url}"))
                 # TOS 上传成功后可以删除本地文件
                 try:
                     local_path.unlink()
@@ -156,16 +163,13 @@ def hook_video_upload(
                 # TOS 不可用，使用本地路径
                 abs_path = str(local_path.resolve())
                 new_parts.append(
-                    types.Part(
-                        text=f"用户上传了视频文件，本地路径: {abs_path}"
-                    )
+                    types.Part(text=f"用户上传了视频文件，本地路径: {abs_path}")
                 )
 
     if has_inline_data:
         user_content.parts = new_parts
         logger.info(
-            f"[video_upload_hook] inline_data 已转换为文本 "
-            f"({len(new_parts)} parts)"
+            f"[video_upload_hook] inline_data 已转换为文本 ({len(new_parts)} parts)"
         )
 
     # 返回 None 表示不中断正常流程

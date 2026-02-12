@@ -33,7 +33,9 @@ def video_upload_to_tos(file_path: str, bucket_name: str = None) -> dict:
         dict: 包含 video_url 或 error
     """
     if bucket_name is None:
-        bucket_name = os.getenv("DATABASE_TOS_BUCKET") or os.getenv("TOS_BUCKET", DEFAULT_BUCKET)
+        bucket_name = os.getenv("DATABASE_TOS_BUCKET") or os.getenv(
+            "TOS_BUCKET", DEFAULT_BUCKET
+        )
     region = os.getenv("DATABASE_TOS_REGION") or os.getenv("TOS_REGION", DEFAULT_REGION)
 
     # 检查文件
@@ -55,6 +57,7 @@ def video_upload_to_tos(file_path: str, bucket_name: str = None) -> dict:
     if not access_key or not secret_key:
         try:
             from veadk.auth.veauth.utils import get_credential_from_vefaas_iam
+
             cred = get_credential_from_vefaas_iam()
             access_key = cred.access_key_id
             secret_key = cred.secret_access_key
@@ -63,7 +66,9 @@ def video_upload_to_tos(file_path: str, bucket_name: str = None) -> dict:
             pass
 
     if not access_key or not secret_key:
-        return {"error": "缺少 TOS 访问凭证，请设置 VOLCENGINE_ACCESS_KEY 和 VOLCENGINE_SECRET_KEY"}
+        return {
+            "error": "缺少 TOS 访问凭证，请设置 VOLCENGINE_ACCESS_KEY 和 VOLCENGINE_SECRET_KEY"
+        }
 
     # 自动生成 object_key
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
@@ -91,7 +96,7 @@ def video_upload_to_tos(file_path: str, bucket_name: str = None) -> dict:
             raise
 
         print(f"上传中: {file_path} -> {bucket_name}/{object_key}", file=sys.stderr)
-        result = client.put_object_from_file(
+        client.put_object_from_file(
             bucket=bucket_name, key=object_key, file_path=file_path
         )
 

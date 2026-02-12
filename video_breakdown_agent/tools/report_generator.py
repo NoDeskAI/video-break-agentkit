@@ -2,6 +2,7 @@
 视频分析报告生成工具
 兼容新格式（process_video + analyze_segments_vision 输出）和旧格式
 """
+
 import logging
 from datetime import datetime
 from typing import Optional
@@ -142,7 +143,9 @@ def generate_video_report(
     )
 
     if not breakdown_data:
-        logger.warning("报告生成失败：缺少 breakdown_data（state: process_video_result）")
+        logger.warning(
+            "报告生成失败：缺少 breakdown_data（state: process_video_result）"
+        )
         return (
             "## 报告生成失败\n\n"
             "- 未找到分镜拆解数据（`process_video_result`）。\n"
@@ -171,17 +174,31 @@ def generate_video_report(
     full_transcript = breakdown_data.get("full_transcript", "")
 
     # 提取 BGM 信息
-    music_style = bgm.get("music_style", {}).get("primary", "N/A") if isinstance(bgm.get("music_style"), dict) else "N/A"
-    emotion = bgm.get("emotion", {}).get("primary", "N/A") if isinstance(bgm.get("emotion"), dict) else "N/A"
-    tempo = bgm.get("tempo", {}).get("bpm_estimate", "N/A") if isinstance(bgm.get("tempo"), dict) else "N/A"
-    tempo_pace = bgm.get("tempo", {}).get("pace", "N/A") if isinstance(bgm.get("tempo"), dict) else "N/A"
+    music_style = (
+        bgm.get("music_style", {}).get("primary", "N/A")
+        if isinstance(bgm.get("music_style"), dict)
+        else "N/A"
+    )
+    emotion = (
+        bgm.get("emotion", {}).get("primary", "N/A")
+        if isinstance(bgm.get("emotion"), dict)
+        else "N/A"
+    )
+    tempo = (
+        bgm.get("tempo", {}).get("bpm_estimate", "N/A")
+        if isinstance(bgm.get("tempo"), dict)
+        else "N/A"
+    )
+    tempo_pace = (
+        bgm.get("tempo", {}).get("pace", "N/A")
+        if isinstance(bgm.get("tempo"), dict)
+        else "N/A"
+    )
     has_bgm = bgm.get("has_bgm")
 
     # 提取场景信息
     primary_scene = scene.get("primary_scene", "N/A") if scene else "N/A"
-    video_style = (
-        scene.get("video_style", {}).get("overall", "N/A") if scene else "N/A"
-    )
+    video_style = scene.get("video_style", {}).get("overall", "N/A") if scene else "N/A"
     target_audience = (
         ", ".join(scene.get("video_style", {}).get("target_audience", []))
         if scene
@@ -251,7 +268,7 @@ def generate_video_report(
 
 ---
 
-**报告生成时间**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+**报告生成时间**: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
 """
 
     logger.info(f"报告生成完成，总长度: {len(report)} 字符")
@@ -275,11 +292,31 @@ def _build_hook_section(hook_analysis: dict) -> str:
 
     # 使用分段展示每个维度（评价内容可能很长，表格不适合）
     dimensions = [
-        ("视觉冲击力", hook_analysis.get("visual_impact", 0), hook_analysis.get("visual_comment", "")),
-        ("语言钩子", hook_analysis.get("language_hook", 0), hook_analysis.get("language_comment", "")),
-        ("情绪唤起", hook_analysis.get("emotion_trigger", 0), hook_analysis.get("emotion_comment", "")),
-        ("信息密度", hook_analysis.get("information_density", 0), hook_analysis.get("info_comment", "")),
-        ("节奏掌控", hook_analysis.get("rhythm_control", 0), hook_analysis.get("rhythm_comment", "")),
+        (
+            "视觉冲击力",
+            hook_analysis.get("visual_impact", 0),
+            hook_analysis.get("visual_comment", ""),
+        ),
+        (
+            "语言钩子",
+            hook_analysis.get("language_hook", 0),
+            hook_analysis.get("language_comment", ""),
+        ),
+        (
+            "情绪唤起",
+            hook_analysis.get("emotion_trigger", 0),
+            hook_analysis.get("emotion_comment", ""),
+        ),
+        (
+            "信息密度",
+            hook_analysis.get("information_density", 0),
+            hook_analysis.get("info_comment", ""),
+        ),
+        (
+            "节奏掌控",
+            hook_analysis.get("rhythm_control", 0),
+            hook_analysis.get("rhythm_comment", ""),
+        ),
     ]
 
     dimension_sections = []
@@ -291,9 +328,7 @@ def _build_hook_section(hook_analysis: dict) -> str:
     weaknesses = hook_analysis.get("weaknesses", [])
     suggestions = hook_analysis.get("suggestions", [])
 
-    strengths_text = (
-        "\n".join(f"- {s}" for s in strengths) if strengths else "- 暂无"
-    )
+    strengths_text = "\n".join(f"- {s}" for s in strengths) if strengths else "- 暂无"
     weaknesses_text = (
         "\n".join(f"- {w}" for w in weaknesses) if weaknesses else "- 暂无"
     )

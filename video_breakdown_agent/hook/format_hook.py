@@ -77,7 +77,9 @@ def _event_to_text(event: Optional[Event]) -> str:
     except Exception:
         pass
     try:
-        return json.dumps(getattr(event, "__dict__", {}), ensure_ascii=False, default=str)
+        return json.dumps(
+            getattr(event, "__dict__", {}), ensure_ascii=False, default=str
+        )
     except Exception:
         return str(event)
 
@@ -189,7 +191,9 @@ def _extract_score(text: str, label: str) -> Optional[float]:
 
 
 def _extract_list_by_heading(text: str, heading: str) -> list[str]:
-    pattern = rf"{heading}[\s\S]{{0,120}}?(?:\n|\r\n)([\s\S]{{0,600}}?)(?:\n\n|###|####|$)"
+    pattern = (
+        rf"{heading}[\s\S]{{0,120}}?(?:\n|\r\n)([\s\S]{{0,600}}?)(?:\n\n|###|####|$)"
+    )
     m = re.search(pattern, text, flags=re.IGNORECASE)
     if not m:
         return []
@@ -212,7 +216,9 @@ def _fallback_struct_from_text(text: str) -> dict[str, Any]:
 
     output["strengths"] = _extract_list_by_heading(text, r"(?:亮点|优点|strengths)")
     output["weaknesses"] = _extract_list_by_heading(text, r"(?:待改进|不足|weaknesses)")
-    output["suggestions"] = _extract_list_by_heading(text, r"(?:优化建议|建议|suggestions)")
+    output["suggestions"] = _extract_list_by_heading(
+        text, r"(?:优化建议|建议|suggestions)"
+    )
 
     excerpt = _safe_text(text, max_len=500)
     if excerpt:
@@ -244,7 +250,9 @@ def _build_hook_markdown_summary(output: dict[str, Any]) -> str:
     suggestions = _coerce_to_list(output.get("suggestions"))
 
     strengths_text = "\n".join(f"- {s}" for s in strengths) if strengths else "- 暂无"
-    weaknesses_text = "\n".join(f"- {w}" for w in weaknesses) if weaknesses else "- 暂无"
+    weaknesses_text = (
+        "\n".join(f"- {w}" for w in weaknesses) if weaknesses else "- 暂无"
+    )
     suggestions_text = (
         "\n".join(f"{i + 1}. {s}" for i, s in enumerate(suggestions))
         if suggestions
@@ -305,7 +313,9 @@ def soft_fix_hook_output(
 
     if isinstance(parsed, dict) and not _looks_like_tool_envelope(parsed):
         normalized = _normalize_output(parsed)
-        logger.info("[soft_fix_hook_output] normalized by json path agent=%s", agent_name)
+        logger.info(
+            "[soft_fix_hook_output] normalized by json path agent=%s", agent_name
+        )
     else:
         normalized = _fallback_struct_from_text(text)
         logger.warning(

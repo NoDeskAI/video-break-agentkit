@@ -17,4 +17,3 @@ def direct_output_callback(
     if tool.name == "generate_video_report":
         tool_context.actions.skip_summarization = True
     return tool_response
-

@@ -3,6 +3,7 @@
 负责接收视频URL/本地文件，完成 FFmpeg 预处理 + ASR + 视觉分析 + BGM 分析
 无需外部后端服务，所有逻辑自包含在 tool 中
 """
+
 import os
 
 from veadk import Agent

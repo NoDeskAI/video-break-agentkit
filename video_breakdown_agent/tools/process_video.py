@@ -7,6 +7,7 @@
 - video-breakdown-master/app/services/media_processor.py
 - video-breakdown-master/app/services/asr_service.py
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -37,6 +38,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class SegmentAsset:
     """单个时间片段的资源信息"""
+
     index: int
     start: float
     end: float
@@ -77,6 +79,7 @@ def _resolve_ffmpeg_paths() -> tuple[str, Optional[str]]:
     if not ffmpeg_bin:
         try:
             import imageio_ffmpeg
+
             ffmpeg_bin = imageio_ffmpeg.get_ffmpeg_exe()
             logger.info(f"系统无 FFmpeg，使用 imageio-ffmpeg 内置: {ffmpeg_bin}")
         except ImportError:
@@ -111,7 +114,9 @@ def _run_command(cmd: List[str]) -> str:
     return process.stdout.strip()
 
 
-def _probe_video(ffprobe_bin: Optional[str], ffmpeg_bin: str, video_path: Path) -> Dict[str, Any]:
+def _probe_video(
+    ffprobe_bin: Optional[str], ffmpeg_bin: str, video_path: Path
+) -> Dict[str, Any]:
     """
     获取视频元数据。
 
@@ -126,9 +131,13 @@ def _probe_video(ffprobe_bin: Optional[str], ffmpeg_bin: str, video_path: Path) 
 def _probe_with_ffprobe(ffprobe_bin: str, video_path: Path) -> Dict[str, Any]:
     """使用 ffprobe 获取视频元数据（首选方式）"""
     cmd = [
-        ffprobe_bin, "-v", "error",
-        "-print_format", "json",
-        "-show_format", "-show_streams",
+        ffprobe_bin,
+        "-v",
+        "error",
+        "-print_format",
+        "json",
+        "-show_format",
+        "-show_streams",
         str(video_path),
     ]
     result = _run_command(cmd)
@@ -198,7 +207,9 @@ def _probe_with_ffmpeg(ffmpeg_bin: str, video_path: Path) -> Dict[str, Any]:
     if fps_match:
         frame_rate = fps_match.group(1)
 
-    logger.info(f"ffmpeg 探测: duration={duration}s, {width}x{height}, fps={frame_rate}")
+    logger.info(
+        f"ffmpeg 探测: duration={duration}s, {width}x{height}, fps={frame_rate}"
+    )
     return {
         "duration": duration,
         "width": width,
@@ -213,10 +224,19 @@ def _extract_audio_sync(ffmpeg_bin: str, video_path: Path) -> Optional[Path]:
     """提取音频轨（同步版本，由 asyncio.to_thread 调用）"""
     output_path = video_path.parent / f"{video_path.stem}.mp3"
     cmd = [
-        ffmpeg_bin, "-y",
-        "-i", str(video_path),
-        "-vn", "-ac", "1", "-ar", "16000",
-        "-codec:a", "libmp3lame", "-b:a", "128k",
+        ffmpeg_bin,
+        "-y",
+        "-i",
+        str(video_path),
+        "-vn",
+        "-ac",
+        "1",
+        "-ar",
+        "16000",
+        "-codec:a",
+        "libmp3lame",
+        "-b:a",
+        "128k",
         str(output_path),
     ]
     try:
@@ -306,11 +326,16 @@ def _extract_segment_frames(
         output_path = frames_dir / f"seg{segment.index:03d}_frame_{i}.jpg"
 
         cmd = [
-            ffmpeg_bin, "-y",
-            "-ss", f"{offset:.2f}",
-            "-i", str(video_path),
-            "-frames:v", "1",
-            "-q:v", "8",  # 降低质量减小文件体积（2=最高质量，31=最低质量）
+            ffmpeg_bin,
+            "-y",
+            "-ss",
+            f"{offset:.2f}",
+            "-i",
+            str(video_path),
+            "-frames:v",
+            "1",
+            "-q:v",
+            "8",  # 降低质量减小文件体积（2=最高质量，31=最低质量）
             str(output_path),
         ]
         try:
@@ -332,13 +357,24 @@ def _extract_single_clip(
     output_path = clips_dir / f"seg{segment.index:03d}_clip.mp4"
 
     cmd = [
-        ffmpeg_bin, "-y",
-        "-ss", f"{segment.start:.2f}",
-        "-i", str(video_path),
-        "-t", f"{duration:.2f}",
-        "-c:v", "libx264", "-c:a", "aac",
-        "-b:v", "1000k", "-b:a", "128k",
-        "-movflags", "+faststart",
+        ffmpeg_bin,
+        "-y",
+        "-ss",
+        f"{segment.start:.2f}",
+        "-i",
+        str(video_path),
+        "-t",
+        f"{duration:.2f}",
+        "-c:v",
+        "libx264",
+        "-c:a",
+        "aac",
+        "-b:v",
+        "1000k",
+        "-b:a",
+        "128k",
+        "-movflags",
+        "+faststart",
         str(output_path),
     ]
     try:
@@ -360,7 +396,9 @@ async def _transcribe_audio(audio_url: str) -> Optional[Dict[str, Any]]:
     # VeADK 扁平化: asr.app_id → ASR_APP_ID; 兼容旧名 VOLC_ASR_*
     app_id = os.getenv("ASR_APP_ID") or os.getenv("VOLC_ASR_APP_ID", "")
     access_key = os.getenv("ASR_ACCESS_KEY") or os.getenv("VOLC_ASR_ACCESS_KEY", "")
-    resource_id = os.getenv("ASR_RESOURCE_ID") or os.getenv("VOLC_ASR_RESOURCE_ID", "volc.bigasr.auc")
+    resource_id = os.getenv("ASR_RESOURCE_ID") or os.getenv(
+        "VOLC_ASR_RESOURCE_ID", "volc.bigasr.auc"
+    )
     submit_endpoint = os.getenv(
         "ASR_ENDPOINT",
     ) or os.getenv(
@@ -375,7 +413,9 @@ async def _transcribe_audio(audio_url: str) -> Optional[Dict[str, Any]]:
     )
 
     if not app_id or not access_key:
-        logger.info("未配置火山 ASR（VOLC_ASR_APP_ID / VOLC_ASR_ACCESS_KEY），跳过语音识别")
+        logger.info(
+            "未配置火山 ASR（VOLC_ASR_APP_ID / VOLC_ASR_ACCESS_KEY），跳过语音识别"
+        )
         return None
 
     request_id = str(uuid.uuid4())
@@ -458,11 +498,13 @@ def _parse_asr_result(response_json: Dict[str, Any]) -> Optional[Dict[str, Any]]
             for item in utterances:
                 text = item.get("text")
                 if text:
-                    segments.append({
-                        "text": text.strip(),
-                        "start": (item.get("start_time") or 0) / 1000.0,
-                        "end": (item.get("end_time") or 0) / 1000.0,
-                    })
+                    segments.append(
+                        {
+                            "text": text.strip(),
+                            "start": (item.get("start_time") or 0) / 1000.0,
+                            "end": (item.get("end_time") or 0) / 1000.0,
+                        }
+                    )
 
     merged_text = "\n".join([c for c in text_chunks if c]).strip()
     if not merged_text:
@@ -481,6 +523,7 @@ def _get_tos_client() -> Optional[tos.TosClientV2]:
     if not ak or not sk:
         try:
             from veadk.auth.veauth.utils import get_credential_from_vefaas_iam
+
             cred = get_credential_from_vefaas_iam()
             ak = cred.access_key_id
             sk = cred.secret_access_key
@@ -503,7 +546,11 @@ async def _upload_to_tos(
     """上传字节到 TOS 并返回签名 URL"""
     try:
         await asyncio.to_thread(
-            client.put_object, bucket=bucket, key=key, content=content, content_type=content_type
+            client.put_object,
+            bucket=bucket,
+            key=key,
+            content=content,
+            content_type=content_type,
         )
         signed = await asyncio.to_thread(
             client.pre_signed_url,
@@ -586,8 +633,12 @@ async def process_video(video_url: str, tool_context: ToolContext) -> dict:
     # 自动检测 ffmpeg/ffprobe 路径（系统 → imageio-ffmpeg 回退）
     ffmpeg_bin, ffprobe_bin = _resolve_ffmpeg_paths()
     # 减少帧数以降低 base64 体积（避免超过 LLM tokens 限制）
-    frames_per_segment = int(os.getenv("FFMPEG_FRAMES_PER_SEGMENT") or os.getenv("FRAMES_PER_SEGMENT", "2"))
-    temp_base = os.getenv("FFMPEG_MEDIA_TEMP_DIR") or os.getenv("MEDIA_TEMP_DIR", "./.media-cache")
+    frames_per_segment = int(
+        os.getenv("FFMPEG_FRAMES_PER_SEGMENT") or os.getenv("FRAMES_PER_SEGMENT", "2")
+    )
+    temp_base = os.getenv("FFMPEG_MEDIA_TEMP_DIR") or os.getenv(
+        "MEDIA_TEMP_DIR", "./.media-cache"
+    )
     Path(temp_base).mkdir(parents=True, exist_ok=True)
 
     task_id = datetime.now().strftime("%Y%m%d_%H%M%S") + "_" + uuid.uuid4().hex[:8]
@@ -595,7 +646,9 @@ async def process_video(video_url: str, tool_context: ToolContext) -> dict:
     local_video = temp_dir / f"{task_id}.mp4"
 
     # TOS 配置（VeADK 扁平化: database.tos.bucket → DATABASE_TOS_BUCKET）
-    bucket = os.getenv("DATABASE_TOS_BUCKET") or os.getenv("TOS_BUCKET", "video-breakdown-uploads")
+    bucket = os.getenv("DATABASE_TOS_BUCKET") or os.getenv(
+        "TOS_BUCKET", "video-breakdown-uploads"
+    )
     tos_prefix = os.getenv("TOS_OUTPUT_PREFIX", "videobreak")
 
     try:
@@ -609,9 +662,13 @@ async def process_video(video_url: str, tool_context: ToolContext) -> dict:
             file_size = local_source.stat().st_size
             max_video_size = 2 * 1024 * 1024 * 1024  # 2GB
             if file_size > max_video_size:
-                return {"error": f"视频文件过大（>{max_video_size // 1024 // 1024}MB），请压缩后重试"}
+                return {
+                    "error": f"视频文件过大（>{max_video_size // 1024 // 1024}MB），请压缩后重试"
+                }
             shutil.copy2(str(local_source), str(local_video))
-            logger.info(f"[process_video] 使用本地文件: {local_source} ({file_size / 1024 / 1024:.1f}MB)")
+            logger.info(
+                f"[process_video] 使用本地文件: {local_source} ({file_size / 1024 / 1024:.1f}MB)"
+            )
         else:
             # HTTP URL：流式下载
             logger.info(f"[process_video] 下载视频: {video_url[:100]}...")
@@ -624,20 +681,30 @@ async def process_video(video_url: str, tool_context: ToolContext) -> dict:
                         async for chunk in resp.aiter_bytes(chunk_size=65536):
                             total_downloaded += len(chunk)
                             if total_downloaded > max_video_size:
-                                return {"error": f"视频文件过大（>{max_video_size // 1024 // 1024}MB），请压缩后重试"}
+                                return {
+                                    "error": f"视频文件过大（>{max_video_size // 1024 // 1024}MB），请压缩后重试"
+                                }
                             f.write(chunk)
-            logger.info(f"[process_video] 下载完成: {local_video} ({total_downloaded / 1024 / 1024:.1f}MB)")
+            logger.info(
+                f"[process_video] 下载完成: {local_video} ({total_downloaded / 1024 / 1024:.1f}MB)"
+            )
 
         # ---- Step 2: 元数据 ----
-        metadata = await asyncio.to_thread(_probe_video, ffprobe_bin, ffmpeg_bin, local_video)
+        metadata = await asyncio.to_thread(
+            _probe_video, ffprobe_bin, ffmpeg_bin, local_video
+        )
         duration = float(metadata.get("duration") or 0.0)
         if duration <= 0:
             return {"error": "无法获取视频时长，请确认视频URL有效"}
-        resolution = f'{metadata.get("width")}x{metadata.get("height")}'
-        logger.info(f"[process_video] 元数据: 时长={duration:.1f}s, 分辨率={resolution}")
+        resolution = f"{metadata.get('width')}x{metadata.get('height')}"
+        logger.info(
+            f"[process_video] 元数据: 时长={duration:.1f}s, 分辨率={resolution}"
+        )
 
         # ---- Step 3: 提取音频 ----
-        audio_path = await asyncio.to_thread(_extract_audio_sync, ffmpeg_bin, local_video)
+        audio_path = await asyncio.to_thread(
+            _extract_audio_sync, ffmpeg_bin, local_video
+        )
         audio_url_out = None
         audio_base64 = None
 
@@ -668,7 +735,11 @@ async def process_video(video_url: str, tool_context: ToolContext) -> dict:
         # ---- Step 6: 提取关键帧（并发） ----
         frame_tasks = [
             asyncio.to_thread(
-                _extract_segment_frames, ffmpeg_bin, local_video, seg, frames_per_segment
+                _extract_segment_frames,
+                ffmpeg_bin,
+                local_video,
+                seg,
+                frames_per_segment,
             )
             for seg in segments
         ]
@@ -701,7 +772,14 @@ async def process_video(video_url: str, tool_context: ToolContext) -> dict:
                 if seg.clip_path and seg.clip_path.exists():
                     key = f"{tos_prefix}/{task_id}/clips/{seg.clip_path.name}"
                     upload_tasks.append(
-                        ("clip", seg, seg.clip_path, key, seg.clip_path.read_bytes(), "video/mp4")
+                        (
+                            "clip",
+                            seg,
+                            seg.clip_path,
+                            key,
+                            seg.clip_path.read_bytes(),
+                            "video/mp4",
+                        )
                     )
 
             # 并发上传（信号量限制并发数，避免 TOS 限流）
@@ -759,15 +837,17 @@ async def process_video(video_url: str, tool_context: ToolContext) -> dict:
 
         segments_output = []
         for seg in segments:
-            segments_output.append({
-                "index": seg.index,
-                "start": round(seg.start, 2),
-                "end": round(seg.end, 2),
-                "frame_urls": seg.frame_urls,
-                "clip_url": seg.clip_url,
-                "is_speech": seg.is_speech,
-                "speech_text": seg.speech_text,
-            })
+            segments_output.append(
+                {
+                    "index": seg.index,
+                    "start": round(seg.start, 2),
+                    "end": round(seg.end, 2),
+                    "frame_urls": seg.frame_urls,
+                    "clip_url": seg.clip_url,
+                    "is_speech": seg.is_speech,
+                    "speech_text": seg.speech_text,
+                }
+            )
 
         result = {
             "task_id": task_id,
@@ -808,7 +888,9 @@ async def process_video(video_url: str, tool_context: ToolContext) -> dict:
     except httpx.HTTPError as exc:
         return {"error": f"视频下载失败: {exc}"}
     except subprocess.CalledProcessError as exc:
-        return {"error": f"FFmpeg 处理失败: {exc.stderr[:300] if exc.stderr else str(exc)}"}
+        return {
+            "error": f"FFmpeg 处理失败: {exc.stderr[:300] if exc.stderr else str(exc)}"
+        }
     except Exception as exc:
         logger.error(f"[process_video] 异常: {exc}", exc_info=True)
         return {"error": f"视频预处理失败: {str(exc)}"}
