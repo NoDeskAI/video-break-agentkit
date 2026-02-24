@@ -12,6 +12,8 @@ from veadk import Agent
 from veadk.agents.sequential_agent import SequentialAgent
 from veadk.memory.short_term_memory import ShortTermMemory
 from veadk.tools.builtin_tools.web_search import web_search
+from google.adk.agents.callback_context import CallbackContext
+from google.adk.tools import ToolContext
 
 from .hook.final_output_hook import guard_final_user_output
 from .hook.search_output_hook import suppress_search_agent_user_output
@@ -34,6 +36,17 @@ from .tools.video_upload import video_upload_to_tos
 from .tools.analyze_hook_segments import analyze_hook_segments
 from .tools.report_generator import generate_video_report
 from .utils.types import json_response_config
+
+# ==================== 视频复刻Agent导入（新增） ====================
+from .sub_agents.video_recreation_agent.agent import video_recreation_agent
+
+# ==================== Fork优化导入（新增） ====================
+from .sub_agents.hook_analyzer_agent.filtered_sequential import (
+    HookAnalyzerSequentialAgent,
+)
+from .sub_agents.hook_analyzer_agent.hook.clean_tool_args import (
+    clean_analyze_hook_arguments,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -115,27 +128,52 @@ def create_breakdown_agent() -> Agent:
 
 
 def create_hook_analyzer_agent() -> SequentialAgent:
+    """
+    创建Hook Analyzer Agent（Fork优化版）
+    
+    优化点：
+    1. 使用 HookAnalyzerSequentialAgent 过滤中间步骤输出
+    2. 使用 _prime_hook_segments_state 预加载数据
+    3. 使用 clean_analyze_hook_arguments 清理工具参数
+    """
+    def _prime_hook_segments_state(callback_context: CallbackContext):
+        """在LLM运行前预加载hook_segments_context，确保数据稳定性"""
+        inv = getattr(callback_context, "_invocation_context", None)
+        if not inv:
+            return None
+        state = getattr(callback_context, "state", None)
+        if isinstance(state, dict) and state.get("hook_segments_context"):
+            return None
+        tool_ctx = ToolContext(inv)
+        context = analyze_hook_segments(tool_ctx)
+        if isinstance(state, dict):
+            state["hook_segments_context"] = context
+        return None
+
     hook_analysis_agent = Agent(
         name="hook_analysis_agent",
         model_name=os.getenv("MODEL_VISION_NAME", "doubao-seed-1-6-vision-250815"),
         description="对视频前三秒分镜进行深度钩子分析，具备视觉分析能力，可直接观察关键帧图片进行专业评估",
         instruction=HOOK_ANALYZER_INSTRUCTION,
-        tools=[analyze_hook_segments],
+        tools=[],  # ⚠️ Fork优化：不直接挂载工具，通过callback预加载
+        before_agent_callback=_prime_hook_segments_state,  # ⚠️ Fork优化：预加载数据
+        after_model_callback=[clean_analyze_hook_arguments],  # ⚠️ Fork优化：清理参数
         model_extra_config={
             "extra_body": {
                 "thinking": {
                     "type": os.getenv("THINKING_HOOK_ANALYZER_AGENT", "disabled")
-                }
+                },
+                "caching": {"type": "disabled"},  # 禁用缓存，避免账户未激活 cache service
             }
         },
     )
 
     hook_format_agent = Agent(
         name="hook_format_agent",
-        model_name=os.getenv("MODEL_FORMAT_NAME", os.getenv("MODEL_AGENT_NAME", "")),
+        model_name=os.getenv("MODEL_FORMAT_NAME", os.getenv("MODEL_AGENT_NAME", "doubao-seed-1-6-251015")),
         description="将钩子分析结果格式化为结构化输出并投影为用户可读 Markdown",
         instruction=HOOK_FORMAT_INSTRUCTION,
-        generate_content_config=json_response_config,
+        # 不设置 json_response_config，让 LLM 自由按 Markdown 模板输出，避免 JSON 模式与 Prompt 冲突
         output_key="hook_analysis",
         after_model_callback=[soft_fix_hook_output],
         model_extra_config={
@@ -147,9 +185,9 @@ def create_hook_analyzer_agent() -> SequentialAgent:
         },
     )
 
-    return SequentialAgent(
+    return HookAnalyzerSequentialAgent(  # ⚠️ Fork优化：使用自定义类过滤中间步骤
         name="hook_analyzer_agent",
-        description="前三秒钩子分析顺序流程：先分析，再格式化输出",
+        description="前三秒钩子分析顺序流程：先分析，再格式化输出（Fork优化版）",
         sub_agents=[hook_analysis_agent, hook_format_agent],
     )
 
@@ -205,7 +243,7 @@ agent = Agent(
     description=(
         "专业的视频分镜拆解和深度分析助手，"
         "支持URL链接和本地文件上传，"
-        "能够自动拆解视频分镜、分析前三秒钩子、生成专业报告"
+        "能够自动拆解视频分镜、分析前三秒钩子、生成专业报告、复刻爆款视频"  # 新增描述
     ),
     instruction=ROOT_AGENT_INSTRUCTION,
     sub_agents=[
@@ -214,6 +252,7 @@ agent = Agent(
         report_only_pipeline,
         breakdown_only_pipeline,
         search_agent,
+        video_recreation_agent,  # ✅ 新增：视频复刻Agent
     ],
     short_term_memory=ShortTermMemory(backend="local"),
     # 拦截 veadk web UI 上传的文件（inline_data → 文本 URL/路径）

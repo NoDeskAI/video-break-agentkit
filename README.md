@@ -424,6 +424,20 @@ agentkit invoke "分析这个视频 https://example.com/video.mp4"
 
 ## 主要特性
 
+### Fork优化集成
+
+本版本集成了Fork版本的以下优化：
+
+- **Hook Analyzer 中间步骤过滤**：使用 `HookAnalyzerSequentialAgent` 自动过滤中间分析步骤，用户只看到最终格式化结果
+- **数据预加载机制**：通过 `_prime_hook_segments_state` 在LLM运行前预加载数据，提升稳定性
+- **工具参数清理**：通过 `clean_analyze_hook_arguments` 自动清理工具调用参数，避免格式错误
+
+### 视频复刻能力（Main版本新增）
+
+- **LLM主导提示词生成**：Skill方案三阶段工作流（特征提取 → 知识检索 → 组装生成）
+- **Doubao-Seedance集成**：支持首尾帧、参考图、音频生成
+- **增强脚本分析**：光影、色调、景深、构图、运动5个新维度
+
 ### Multi-Agent 协作架构
 
 Root Agent 作为主编排器，根据用户意图自动调度 4 个专业子 Agent：

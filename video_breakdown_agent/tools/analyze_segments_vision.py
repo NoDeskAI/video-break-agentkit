@@ -14,7 +14,7 @@ import os
 from typing import Any, Dict, Optional
 
 from google.adk.tools import ToolContext
-from video_breakdown_agent.utils.doubao_client import call_doubao_vision
+from video_breakdown_agent.utils.doubao_client import call_doubao_text
 
 logger = logging.getLogger(__name__)
 
@@ -69,6 +69,11 @@ def _build_segment_prompt(segment: Dict[str, Any]) -> Dict[str, Any]:
                     "画面内容描述：必须综合所有关键帧，描述整个片段的画面内容",
                     "如果多张图片之间画面有变化，需要描述变化过程",
                     "如果画面基本一致，则描述画面的主要元素和场景",
+                    "光影特征：识别主光源类型（自然光/人工光/混合光）、光源方向（顶光/侧光/逆光/正面光/环境光）、明暗对比程度、阴影风格",
+                    "色调风格：主色调倾向、饱和度等级（高/中/低/黑白）、色彩氛围（暖/冷/中性）、是否有滤镜效果",
+                    "景深控制：背景虚化程度（强/中/弱/全景深）、焦点主体、景深范围（浅/中/深）",
+                    "构图方式：主体在画面中的位置、构图法则（三分法/中心构图/对角线/框架构图等）、画面平衡感",
+                    "运动特征：画面中动作的速度（快/中/慢/静止）、节奏感（流畅/卡顿/有变化/匀速）、是否有特效或转场",
                 ]
             },
             "语音类型判断": {
@@ -112,8 +117,55 @@ def _build_segment_prompt(segment: Dict[str, Any]) -> Dict[str, Any]:
                             ],
                         },
                         "画面内容": {"type": "string"},
+                        "光影": {
+                            "type": "object",
+                            "properties": {
+                                "光源类型": {"type": "string", "description": "自然光/人工光/混合光"},
+                                "光源方向": {"type": "string", "description": "顶光/侧光/逆光/正面光/环境光"},
+                                "明暗对比": {"type": "string", "enum": ["高反差", "中等", "柔和"]},
+                                "阴影风格": {"type": "string", "description": "硬阴影/柔和阴影/无明显阴影"},
+                            },
+                            "required": ["光源类型", "光源方向", "明暗对比"],
+                        },
+                        "色调": {
+                            "type": "object",
+                            "properties": {
+                                "主色调": {"type": "string", "description": "主要色彩倾向"},
+                                "饱和度": {"type": "string", "enum": ["高饱和", "中等", "低饱和", "黑白"]},
+                                "色彩氛围": {"type": "string", "description": "暖色调/冷色调/中性"},
+                                "滤镜效果": {"type": "string", "description": "是否有滤镜，如复古/清新/电影感等，无则填无"},
+                            },
+                            "required": ["主色调", "饱和度", "色彩氛围"],
+                        },
+                        "景深": {
+                            "type": "object",
+                            "properties": {
+                                "虚化程度": {"type": "string", "enum": ["强虚化", "中等虚化", "弱虚化", "全景深"]},
+                                "焦点主体": {"type": "string", "description": "清晰对焦的主体"},
+                                "景深范围": {"type": "string", "description": "浅景深/中景深/深景深"},
+                            },
+                            "required": ["虚化程度", "焦点主体"],
+                        },
+                        "构图": {
+                            "type": "object",
+                            "properties": {
+                                "主体位置": {"type": "string", "description": "画面中心/左侧/右侧/上方/下方"},
+                                "构图法则": {"type": "string", "description": "三分法/中心构图/对角线/框架构图等"},
+                                "画面平衡": {"type": "string", "enum": ["对称", "非对称平衡", "不平衡"]},
+                            },
+                            "required": ["主体位置", "构图法则"],
+                        },
+                        "运动": {
+                            "type": "object",
+                            "properties": {
+                                "速度": {"type": "string", "enum": ["快速", "中速", "慢速", "静止"]},
+                                "节奏感": {"type": "string", "description": "流畅/卡顿/有节奏变化/匀速"},
+                                "特殊效果": {"type": "string", "description": "慢动作/快进/定格/转场效果等，无则填无"},
+                            },
+                            "required": ["速度", "节奏感"],
+                        },
                     },
-                    "required": ["景别", "运镜", "画面内容"],
+                    "required": ["景别", "运镜", "画面内容", "光影", "色调", "景深", "构图", "运动"],
                 },
                 "语音类型": {"type": "string", "enum": ["口播", "旁白"]},
                 "summary": {"type": "string"},
@@ -153,7 +205,16 @@ def _create_fallback(segment: Dict[str, Any]) -> Dict[str, Any]:
         "start": segment["start"],
         "end": segment["end"],
         "summary": "模型解析失败",
-        "视觉表现": {"景别": "未知", "运镜": "未知", "画面内容": ""},
+        "视觉表现": {
+            "景别": "未知",
+            "运镜": "未知",
+            "画面内容": "",
+            "光影": {"光源类型": "未知", "光源方向": "未知", "明暗对比": "中等", "阴影风格": "未知"},
+            "色调": {"主色调": "未知", "饱和度": "中等", "色彩氛围": "中性", "滤镜效果": "无"},
+            "景深": {"虚化程度": "中等虚化", "焦点主体": "未知", "景深范围": "中景深"},
+            "构图": {"主体位置": "画面中心", "构图法则": "未知", "画面平衡": "对称"},
+            "运动": {"速度": "中速", "节奏感": "流畅", "特殊效果": "无"},
+        },
         "语音类型": "旁白",
         "is_speech": False,
         "speech_text": segment.get("speech_text"),
@@ -211,8 +272,8 @@ async def _analyze_single_segment(
 
     for attempt in range(max_retries):
         try:
-            # 调用豆包视觉 API（/responses endpoint，只传 model + input）
-            response = await call_doubao_vision(
+            # 调用豆包视觉模型（/chat/completions 多模态路径，与 hook_analysis_agent 一致）
+            response = await call_doubao_text(
                 model=model_name,
                 messages=messages,
                 api_key=api_key,

@@ -44,6 +44,15 @@ BREAKDOWN_AGENT_INSTRUCTION = """
 - 对本地路径**直接调用** `process_video(video_url=本地路径)`。\n
 - 仅当需要把本地文件转成可分享的外链，才使用 `video_upload_to_tos(file_path)` 上传后再处理。
 
+## 会话数据复用（重要）
+
+如果对话历史中已经包含完整的分镜拆解结果（即之前已执行 `process_video` 和 `analyze_segments_vision`），且用户没有提供新的视频链接：
+- **无需重新调用** `process_video` / `analyze_segments_vision` / `analyze_bgm`
+- 直接输出已有分镜拆解结果的摘要，供后续步骤（如钩子分析/报告生成）使用
+- **仅当**用户提供了新的视频链接，或明确说"重新拆解"时，才重新执行完整流程
+
+这确保你在 `hook_only_pipeline` / `report_only_pipeline` 中被二次调用时，不会因找不到视频 URL 而报错。
+
 ## 完整工作流程
 
 ### Step 1: 获取视频 URL
@@ -86,6 +95,7 @@ BREAKDOWN_AGENT_INSTRUCTION = """
 - 如果视觉分析部分失败，使用 fallback 数据继续
 
 ## 完成后行为（必须遵守）
-- 当你完成分镜拆解并输出结果后，必须立即调用 `transfer_to_agent`，将控制权归还给 `video_breakdown_agent`。
-- 不要在本 Agent 内继续处理“钩子分析/报告生成/下一步编排”请求，交由 Root Agent 统一调度。
+- 当你完成分镜拆解并输出结果后，直接输出结果文本即可。
+- 你处于 SequentialAgent 流程中，框架会自动将控制权传递给下一个步骤，无需手动调用任何转移函数。
+- 不要在本 Agent 内继续处理"钩子分析/报告生成/下一步编排"请求，这些将由后续流程自动处理。
 """
