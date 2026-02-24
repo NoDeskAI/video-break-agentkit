@@ -8,6 +8,7 @@ Agent 定义位于 video_breakdown_agent/agent.py（veadk web 的唯一真相来
   1. uv run veadk web        — 本地开发（veadk web 自动发现 video_breakdown_agent/）
   2. python agent.py          — AgentKit 部署
 """
+
 import logging
 import os
 

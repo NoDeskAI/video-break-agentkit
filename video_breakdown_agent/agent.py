@@ -35,7 +35,6 @@ from .tools.analyze_bgm import analyze_bgm
 from .tools.video_upload import video_upload_to_tos
 from .tools.analyze_hook_segments import analyze_hook_segments
 from .tools.report_generator import generate_video_report
-from .utils.types import json_response_config
 
 # ==================== 视频复刻Agent导入（新增） ====================
 from .sub_agents.video_recreation_agent.agent import video_recreation_agent
@@ -130,12 +129,13 @@ def create_breakdown_agent() -> Agent:
 def create_hook_analyzer_agent() -> SequentialAgent:
     """
     创建Hook Analyzer Agent（Fork优化版）
-    
+
     优化点：
     1. 使用 HookAnalyzerSequentialAgent 过滤中间步骤输出
     2. 使用 _prime_hook_segments_state 预加载数据
     3. 使用 clean_analyze_hook_arguments 清理工具参数
     """
+
     def _prime_hook_segments_state(callback_context: CallbackContext):
         """在LLM运行前预加载hook_segments_context，确保数据稳定性"""
         inv = getattr(callback_context, "_invocation_context", None)
@@ -163,14 +163,18 @@ def create_hook_analyzer_agent() -> SequentialAgent:
                 "thinking": {
                     "type": os.getenv("THINKING_HOOK_ANALYZER_AGENT", "disabled")
                 },
-                "caching": {"type": "disabled"},  # 禁用缓存，避免账户未激活 cache service
+                "caching": {
+                    "type": "disabled"
+                },  # 禁用缓存，避免账户未激活 cache service
             }
         },
     )
 
     hook_format_agent = Agent(
         name="hook_format_agent",
-        model_name=os.getenv("MODEL_FORMAT_NAME", os.getenv("MODEL_AGENT_NAME", "doubao-seed-1-6-251015")),
+        model_name=os.getenv(
+            "MODEL_FORMAT_NAME", os.getenv("MODEL_AGENT_NAME", "doubao-seed-1-6-251015")
+        ),
         description="将钩子分析结果格式化为结构化输出并投影为用户可读 Markdown",
         instruction=HOOK_FORMAT_INSTRUCTION,
         # 不设置 json_response_config，让 LLM 自由按 Markdown 模板输出，避免 JSON 模式与 Prompt 冲突

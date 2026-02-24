@@ -11,6 +11,7 @@ Quick Video Agent — 冒烟测试脚本
     # 端到端在线测试（需要 API Key + 网络）
     uv run python .scripts/smoke_test_quick_video.py --e2e
 """
+
 import asyncio
 import sys
 import os
@@ -48,19 +49,12 @@ def fail(name: str, detail: str = ""):
 def test_imports():
     print("\n[Test 1] 模块导入")
     try:
-        from video_breakdown_agent.sub_agents.video_recreation_agent.tools.direct_video_generation import (
-            direct_video_generation,
-            parse_segment_info,
-        )
         ok("direct_video_generation 导入成功")
     except Exception as e:
         fail("direct_video_generation 导入失败", str(e))
         return
 
     try:
-        from video_breakdown_agent.sub_agents.video_recreation_agent.sub_agents.prompt_preparator.agent import (
-            prompt_preparation_agent,
-        )
         ok("prompt_preparation_agent 导入成功")
     except Exception as e:
         fail("prompt_preparation_agent 导入失败", str(e))
@@ -70,15 +64,13 @@ def test_imports():
     ok("quick_video_agent 架构变更（动态创建，不单独导出）")
 
     try:
-        from video_breakdown_agent.sub_agents.video_recreation_agent.agent import (
-            video_recreation_agent,
-        )
         ok("video_recreation_agent 导入成功")
     except Exception as e:
         fail("video_recreation_agent 导入失败", str(e))
 
     try:
         from video_breakdown_agent.agent import root_agent  # noqa: F401
+
         ok("root_agent (整个项目) 导入成功")
     except Exception as e:
         fail("root_agent 导入失败", str(e))
@@ -111,10 +103,14 @@ def test_agent_tree():
     if len(sub_agents) == 2:
         ok(f"video_recreation_agent 有 2 个 sub_agents: {sub_names}")
     else:
-        fail(f"video_recreation_agent 期望 2 个 sub_agents，实际 {len(sub_agents)}", str(sub_names))
+        fail(
+            f"video_recreation_agent 期望 2 个 sub_agents，实际 {len(sub_agents)}",
+            str(sub_names),
+        )
 
     # 2.3 检查 quick_video_agent 是 SequentialAgent
     from veadk.agents.sequential_agent import SequentialAgent
+
     quick_agent = None
     for a in sub_agents:
         if getattr(a, "name", "") == "quick_video_agent":
@@ -137,7 +133,10 @@ def test_agent_tree():
     if qv_names == expected_order:
         ok(f"quick_video_agent 子Agent 顺序正确: {qv_names}")
     else:
-        fail(f"quick_video_agent 子Agent 顺序错误", f"期望={expected_order}, 实际={qv_names}")
+        fail(
+            "quick_video_agent 子Agent 顺序错误",
+            f"期望={expected_order}, 实际={qv_names}",
+        )
 
     # 2.5 检查 prompt_preparation_agent 持有 direct_video_generation 工具
     if qv_sub:
@@ -147,7 +146,10 @@ def test_agent_tree():
         if "direct_video_generation" in prep_tool_names:
             ok("prompt_preparation_agent 持有 direct_video_generation 工具")
         else:
-            fail("prompt_preparation_agent 未找到 direct_video_generation", f"工具={prep_tool_names}")
+            fail(
+                "prompt_preparation_agent 未找到 direct_video_generation",
+                f"工具={prep_tool_names}",
+            )
 
     # 2.6 检查 recreation_pipeline 存在
     pipeline = None
@@ -183,7 +185,7 @@ def test_parse_segment_info():
 16:9"""
     r1 = parse_segment_info(msg1)
     if r1["segment_name"] == "分镜4" and r1["segment_index"] == 4:
-        ok("分镜编号解析正确", f"分镜4, index=4")
+        ok("分镜编号解析正确", "分镜4, index=4")
     else:
         fail("分镜编号解析错误", str(r1))
 
@@ -239,8 +241,12 @@ def test_selection_hook_stores_message():
         from video_breakdown_agent.sub_agents.video_recreation_agent.hook.selection_hook import (
             hook_segment_selection,
         )
+
         source = inspect.getsource(hook_segment_selection)
-        if 'session.state["user_message"]' in source or "session.state['user_message']" in source:
+        if (
+            'session.state["user_message"]' in source
+            or "session.state['user_message']" in source
+        ):
             ok("hook_segment_selection 中包含 user_message 存储逻辑")
         else:
             fail("hook_segment_selection 中未找到 user_message 存储逻辑")
@@ -258,6 +264,7 @@ def test_direct_video_generation_return():
         from video_breakdown_agent.sub_agents.video_recreation_agent.tools.direct_video_generation import (
             direct_video_generation,
         )
+
         source = inspect.getsource(direct_video_generation)
         if "ready_to_generate" not in source:
             ok("返回值不含 ready_to_generate（已移除旧字段）")
@@ -286,7 +293,9 @@ def test_prompt_content():
         if "direct_video_generation" not in RECREATION_ROOT_AGENT_INSTRUCTION:
             ok("Prompt 不包含旧工具名 direct_video_generation")
         else:
-            fail("Prompt 仍然提及 direct_video_generation（应改为调用 quick_video_agent）")
+            fail(
+                "Prompt 仍然提及 direct_video_generation（应改为调用 quick_video_agent）"
+            )
 
         # 6.2 应包含 quick_video_agent
         if "quick_video_agent" in RECREATION_ROOT_AGENT_INSTRUCTION:
@@ -317,6 +326,7 @@ def test_enhanced_logging():
         from video_breakdown_agent.sub_agents.video_recreation_agent.tools.video_generate_http import (
             video_generate,
         )
+
         source = inspect.getsource(video_generate)
 
         checks = [
@@ -365,7 +375,7 @@ async def test_e2e():
         )
 
         print(f"  📤 发送测试消息 (长度={len(test_message)})")
-        print(f"  ⏳ 等待 Agent 响应（可能需要 3-5 分钟）...")
+        print("  ⏳ 等待 Agent 响应（可能需要 3-5 分钟）...")
 
         result = await runner.run(
             messages=test_message,

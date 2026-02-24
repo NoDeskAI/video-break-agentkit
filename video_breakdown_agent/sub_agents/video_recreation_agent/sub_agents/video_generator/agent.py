@@ -2,7 +2,6 @@
 视频生成Sub-Agent
 参考: multimedia/director-agent/src/director_agent/sub_agents/video/agent.py
 """
-import os
 
 from veadk import Agent
 from veadk.agents.sequential_agent import SequentialAgent
@@ -17,7 +16,7 @@ def create_video_generator_agent() -> SequentialAgent:
     """
     创建视频生成Agent（骨架实现）
     """
-    
+
     # 视频生成Agent（调用Doubao-Seedance API）
     video_generate_agent = Agent(
         name="video_generate_agent",
@@ -30,7 +29,7 @@ def create_video_generator_agent() -> SequentialAgent:
             }
         },
     )
-    
+
     # 视频拼接Agent（单分镜自动跳过，多分镜执行拼接）
     video_merge_agent = Agent(
         name="video_merge_agent",
@@ -48,17 +47,14 @@ def create_video_generator_agent() -> SequentialAgent:
 - 保持简洁，不重复之前已展示的信息，不输出技术细节。""",
         tools=[merge_segments],
     )
-    
+
     # 完整视频生成流程（生成 → 拼接/展示）
     video_generator_agent = SequentialAgent(
         name="video_generator_agent",
         description="视频生成流程：生成 → 拼接/展示链接",
-        sub_agents=[
-            video_generate_agent,
-            video_merge_agent
-        ]
+        sub_agents=[video_generate_agent, video_merge_agent],
     )
-    
+
     return video_generator_agent
 
 

@@ -9,31 +9,31 @@
 ```mermaid
 graph TD
     User[用户输入视频URL/本地文件] --> RootAgent[Root Agent 主编排器小视]
-    
+
     RootAgent --> BreakdownAgent[Breakdown Agent<br/>分镜拆解]
     RootAgent --> HookAnalyzer[Hook Analyzer Agent<br/>钩子分析]
     RootAgent --> ReportGen[Report Generator Agent<br/>报告生成]
     RootAgent --> SearchAgent[Search Agent<br/>联网搜索]
-    
+
     BreakdownAgent --> ProcessVideo[process_video<br/>FFmpeg预处理+ASR]
     BreakdownAgent --> AnalyzeVision[analyze_segments_vision<br/>LiteLLM视觉分析]
     BreakdownAgent --> AnalyzeBGM[analyze_bgm<br/>背景音乐分析]
     BreakdownAgent --> VideoUpload[video_upload_to_tos<br/>TOS上传]
-    
+
     ProcessVideo --> SessionState[(Session State<br/>breakdown_result)]
-    
+
     SessionState --> HookAnalyzer
     HookAnalyzer --> HookAnalysis[hook_analysis_agent<br/>Vision模型多模态分析]
     HookAnalysis --> HookFormat[hook_format_agent<br/>JSON格式化校验]
     HookFormat --> SessionState2[(Session State<br/>hook_analysis)]
-    
+
     SessionState --> ReportGen
     SessionState2 --> ReportGen
     ReportGen --> GenerateReport[generate_video_report<br/>Markdown报告生成]
     GenerateReport --> FinalReport[(Session State<br/>final_report)]
-    
+
     SearchAgent --> WebSearch[web_search<br/>实时信息搜索]
-    
+
     style RootAgent fill:#e1f5ff
     style BreakdownAgent fill:#fff4e1
     style HookAnalyzer fill:#ffe1f5
@@ -54,17 +54,17 @@ sequenceDiagram
     participant Hook as Hook Analyzer
     participant Report as Report Generator
     participant State as Session State
-    
+
     User->>Root: 上传视频/提供URL
     Root->>Breakdown: 委派分镜拆解任务
-    
+
     Breakdown->>Breakdown: FFmpeg视频预处理
     Breakdown->>Breakdown: 火山ASR语音识别
     Breakdown->>Breakdown: 提取关键帧
     Breakdown->>Breakdown: LiteLLM视觉分析
     Breakdown->>State: 写入 breakdown_result
     Breakdown->>Root: 返回分镜数据
-    
+
     Root->>Hook: 委派钩子分析任务
     Hook->>State: 读取 breakdown_result
     Hook->>Hook: 提取前3秒分镜
@@ -72,14 +72,14 @@ sequenceDiagram
     Hook->>Hook: JSON格式化校验
     Hook->>State: 写入 hook_analysis
     Hook->>Root: 返回钩子评分
-    
+
     Root->>Report: 委派报告生成任务
     Report->>State: 读取 breakdown_result
     Report->>State: 读取 hook_analysis
     Report->>Report: 整合数据生成Markdown
     Report->>State: 写入 final_report
     Report->>Root: 返回完整报告
-    
+
     Root->>User: 展示分析结果
 ```
 
@@ -92,22 +92,22 @@ graph LR
     Agent --> ASR[火山ASR语音识别]
     Agent --> AgentKit[AgentKit运行时]
     Agent --> WebSearch[Web Search搜索]
-    
+
     Ark --> Model1[doubao-seed-1-6-251015<br/>主推理模型]
     Ark --> Model2[doubao-seed-1-6-vision-250815<br/>视觉分析模型]
-    
+
     TOS --> Upload[视频/图片上传]
     TOS --> Storage[媒体资源存储]
-    
+
     ASR --> SpeechToText[语音转文字]
     ASR --> Timeline[时间轴分段]
-    
+
     AgentKit --> MultiAgent[Multi-Agent编排]
     AgentKit --> Memory[Session State管理]
-    
+
     WebSearch --> Industry[行业资讯]
     WebSearch --> Trends[平台规则]
-    
+
     style Agent fill:#e1f5ff
     style Ark fill:#fff4e1
     style TOS fill:#ffe1f5

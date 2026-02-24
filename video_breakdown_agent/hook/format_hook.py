@@ -34,20 +34,20 @@ _SCORE_FIELDS = (
 
 # 中文字段名到英文字段名的映射，用于从 LLM Markdown 输出中提取各维度分数
 _ZH_SCORE_MAPPINGS = {
-    "visual_impact":       r"视觉冲击力",
-    "language_hook":       r"语言钩子",
-    "emotion_trigger":     r"情绪唤起",
+    "visual_impact": r"视觉冲击力",
+    "language_hook": r"语言钩子",
+    "emotion_trigger": r"情绪唤起",
     "information_density": r"信息密度",
-    "rhythm_control":      r"节奏掌控",
+    "rhythm_control": r"节奏掌控",
 }
 
 # 中文维度标题到 comment 字段名的映射，用于精确提取各维度评价文本
 _ZH_COMMENT_MAPPINGS = {
-    "visual_comment":   r"视觉冲击力",
+    "visual_comment": r"视觉冲击力",
     "language_comment": r"语言钩子",
-    "emotion_comment":  r"情绪唤起",
-    "info_comment":     r"信息密度",
-    "rhythm_comment":   r"节奏掌控",
+    "emotion_comment": r"情绪唤起",
+    "info_comment": r"信息密度",
+    "rhythm_comment": r"节奏掌控",
 }
 
 _DEFAULT_HOOK_ANALYSIS: dict[str, Any] = {
@@ -142,7 +142,7 @@ def _extract_json_candidate(text: str) -> str:
     fenced = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", text, flags=re.IGNORECASE)
     if fenced and fenced.group(1).strip():
         return fenced.group(1).strip()
-    
+
     # 如果没有代码块，尝试提取第一个完整的 JSON 对象（从 { 到匹配的 }）
     stripped = text.strip()
     if stripped.startswith("{"):
@@ -159,7 +159,7 @@ def _extract_json_candidate(text: str) -> str:
                     break
         if end_pos > 0:
             return stripped[:end_pos]
-    
+
     return stripped
 
 
@@ -280,8 +280,8 @@ def _fallback_struct_from_text(text: str) -> dict[str, Any]:
 
     # 元信息字段提取（hook_type / target_audience / retention_prediction）
     for field, pattern in [
-        ("hook_type",            r"钩子类型\s*[:\uff1a*]+\s*(.+?)(?:[|｜]|\n|$)"),
-        ("target_audience",      r"目标受众\s*[:\uff1a*]+\s*(.+?)(?:[|｜]|\n|$)"),
+        ("hook_type", r"钩子类型\s*[:\uff1a*]+\s*(.+?)(?:[|｜]|\n|$)"),
+        ("target_audience", r"目标受众\s*[:\uff1a*]+\s*(.+?)(?:[|｜]|\n|$)"),
         ("retention_prediction", r"留存预测\s*[:\uff1a*]+\s*(.+?)(?:\n\n|\Z)"),
     ]:
         m = re.search(pattern, text)

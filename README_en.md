@@ -112,7 +112,7 @@ Below is a typical workflow from web search to in-depth video breakdown.
 
 **User:** Analyze the first 3 seconds hook in detail.
 
-**XiaoShi (Root Agent):** 
+**XiaoShi (Root Agent):**
 
 #### 🪝 First 3s Hook Analysis & Rating
 
@@ -134,7 +134,7 @@ Below is a typical workflow from web search to in-depth video breakdown.
 
 **User:** Give me a detailed video insight report.
 
-**XiaoShi (Root Agent):** 
+**XiaoShi (Root Agent):**
 
 #### 📊 LocknLock Product Display Insight Report
 

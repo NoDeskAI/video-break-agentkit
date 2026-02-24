@@ -11,7 +11,10 @@ def _is_tool_call_turn(model_response_event: Optional[Event], text: str) -> bool
     """工具调用回合不做处理，避免干扰 function call。"""
     if model_response_event:
         # 检查 function calls（LLM 发起的工具调用）和 function responses（工具返回后的阶段）
-        if model_response_event.get_function_calls() or model_response_event.get_function_responses():
+        if (
+            model_response_event.get_function_calls()
+            or model_response_event.get_function_responses()
+        ):
             return True
     return "transfer_to_agent" in (text or "") or "web_search" in (text or "")
 

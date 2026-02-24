@@ -33,4 +33,3 @@ VIDEO_FORMAT_INSTRUCTION = """
   "total_failed": 0
 }
 """
-

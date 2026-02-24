@@ -2,6 +2,7 @@
 提示词生成Sub-Agent
 参考: multimedia/director-agent/src/director_agent/sub_agents/storyboard/agent.py
 """
+
 import os
 
 from veadk import Agent
@@ -20,7 +21,7 @@ def create_prompt_generator_agent() -> SequentialAgent:
     """
     创建提示词生成Agent（骨架实现）
     """
-    
+
     # 提示词生成Agent
     prompt_generate_agent = Agent(
         name="prompt_generate_agent",
@@ -33,11 +34,13 @@ def create_prompt_generator_agent() -> SequentialAgent:
             }
         },
     )
-    
+
     # 提示词格式化Agent
     prompt_format_agent = Agent(
         name="prompt_format_agent",
-        model_name=os.getenv("MODEL_FORMAT_NAME", os.getenv("MODEL_AGENT_NAME", "doubao-seed-1-6-251015")),
+        model_name=os.getenv(
+            "MODEL_FORMAT_NAME", os.getenv("MODEL_AGENT_NAME", "doubao-seed-1-6-251015")
+        ),
         description="将提示词格式化为标准JSON结构",
         instruction=PROMPT_FORMAT_INSTRUCTION,
         generate_content_config=json_response_config,
@@ -50,7 +53,7 @@ def create_prompt_generator_agent() -> SequentialAgent:
             }
         },
     )
-    
+
     # 人工审核Agent
     prompt_review_agent = Agent(
         name="prompt_review_agent",
@@ -58,18 +61,14 @@ def create_prompt_generator_agent() -> SequentialAgent:
         instruction="你负责展示生成的提示词，让用户选择要生成的分镜。调用review_prompts工具展示提示词列表。",
         tools=[review_prompts],  # 集成工具
     )
-    
+
     # 完整提示词生成流程（生成 → 格式化 → 审核）
     prompt_generator_agent = SequentialAgent(
         name="prompt_generator_agent",
         description="提示词生成流程：生成 → 格式化 → 用户审核",
-        sub_agents=[
-            prompt_generate_agent,
-            prompt_format_agent,
-            prompt_review_agent
-        ]
+        sub_agents=[prompt_generate_agent, prompt_format_agent, prompt_review_agent],
     )
-    
+
     return prompt_generator_agent
 
 

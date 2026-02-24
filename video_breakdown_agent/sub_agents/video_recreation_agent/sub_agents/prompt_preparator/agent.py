@@ -2,6 +2,7 @@
 提示词准备Agent - 解析用户提供的视频提示词，准备生成参数
 参考: multimedia/director-agent/src/director_agent/sub_agents/video/agent.py
 """
+
 from veadk import Agent
 from veadk.config import getenv
 
@@ -16,8 +17,6 @@ prompt_preparation_agent = Agent(
     tools=[direct_video_generation],
     output_key="prompt_preparation_result",
     model_extra_config={
-        "extra_body": {
-            "thinking": {"type": getenv("THINKING_PROMPT_PREP", "disabled")}
-        }
+        "extra_body": {"thinking": {"type": getenv("THINKING_PROMPT_PREP", "disabled")}}
     },
 )

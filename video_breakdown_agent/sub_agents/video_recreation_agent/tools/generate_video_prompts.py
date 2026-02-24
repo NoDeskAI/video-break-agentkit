@@ -12,6 +12,7 @@ Skill方案：三阶段工作流（知识库作为可选参考）
 - 知识库仅作为表达风格参考，不强制套用
 - 如果知识库无匹配项，完全基于脚本自主生成
 """
+
 from __future__ import annotations
 
 import json
@@ -32,70 +33,68 @@ PROMPT_KNOWLEDGE_BASE = {
         "推进": [
             "镜头从{起点}匀速推进至{焦点}，运动丝滑流畅，焦点精准跟随",
             "推进镜头从{前景}过渡到{主体}，焦点从浅景深逐渐收缩，背景渐进式虚化",
-            "镜头缓慢向前推进，逐渐聚焦于{主体}细节，景深控制突出主体"
+            "镜头缓慢向前推进，逐渐聚焦于{主体}细节，景深控制突出主体",
         ],
         "拉远": [
             "镜头从{特写}匀速拉远至{全景}，展现完整空间关系和环境层次",
-            "缓慢拉开镜头，从局部过渡到全景，层次感清晰，视野逐渐开阔"
+            "缓慢拉开镜头，从局部过渡到全景，层次感清晰，视野逐渐开阔",
         ],
         "环绕": [
             "镜头360度环绕{主体}旋转，展现全方位细节和质感",
-            "镜头从左侧缓慢环绕至右侧，角度从45度到135度匀速变化，流畅展示{主体}全貌"
+            "镜头从左侧缓慢环绕至右侧，角度从45度到135度匀速变化，流畅展示{主体}全貌",
         ],
         "跟拍": [
             "镜头流畅跟随{主体}运动，保持画面稳定构图，动态节奏感强",
-            "手持跟拍，略带晃动增强真实感，视角贴近{主体}，代入感强"
+            "手持跟拍，略带晃动增强真实感，视角贴近{主体}，代入感强",
         ],
         "固定": [
             "固定机位，镜头稳定对准{主体}，构图居中，展现稳定画面",
-            "静态构图，{主体}位于画面{位置}，稳定展现细节，氛围克制"
+            "静态构图，{主体}位于画面{位置}，稳定展现细节，氛围克制",
         ],
         "一镜到底": [
             "10秒一镜到底运镜，全程无剪辑断点，镜头从{起点}自然衔接慢拉，匀速穿过{过渡物}，顺滑过渡到{终点}，运镜丝滑连贯、速度均匀不卡顿",
-            "一镜到底长镜头，镜头从{场景A}流畅移动至{场景B}，中间经过{过渡元素}，全程运动连贯无停顿，氛围感拉满"
+            "一镜到底长镜头，镜头从{场景A}流畅移动至{场景B}，中间经过{过渡元素}，全程运动连贯无停顿，氛围感拉满",
         ],
         "穿越": [
             "镜头穿过{障碍物}（如门/窗/缝隙），自然衔接前后空间，过渡流畅无断点",
-            "镜头从{前景物}缝隙穿出，视角从封闭空间过渡到开阔场景，空间感递进"
+            "镜头从{前景物}缝隙穿出，视角从封闭空间过渡到开阔场景，空间感递进",
         ],
         "摇移": [
             "镜头无缝摇移至{目标}处，运动平稳流畅，视角自然切换",
-            "镜头从{起点}摇移到{终点}，速度均匀，画面连贯衔接"
+            "镜头从{起点}摇移到{终点}，速度均匀，画面连贯衔接",
         ],
         "升降": [
             "镜头缓慢升降拍摄，视角从{低角度}过渡到{高角度}，展现空间纵深",
-            "升降镜头展现场景全貌，从近处升至远景，层次感丰富"
-        ]
+            "升降镜头展现场景全貌，从近处升至远景，层次感丰富",
+        ],
     },
-    
     # 打光描述库（按场景类型分类）
     "lighting_setups": {
         "产品展示_高端": [
             "三点布光：主光源（左侧柔光箱，色温5500K），辅光（右侧反光板），轮廓光（顶部LED灯带），突出产品质感和高级感",
-            "侧光从45度照射，勾勒出{主体}轮廓和质感，柔光箱补光消除阴影，高光反射细腻精致"
+            "侧光从45度照射，勾勒出{主体}轮廓和质感，柔光箱补光消除阴影，高光反射细腻精致",
         ],
         "产品展示_简约": [
             "均匀顶光漫射，白色无缝背景，柔和自然光，无明显阴影，呈现简约高级感",
-            "环形光源包围{主体}，光线柔和均匀，呈现极简风格，画面干净纯粹"
+            "环形光源包围{主体}，光线柔和均匀，呈现极简风格，画面干净纯粹",
         ],
         "生活场景_温馨": [
             "自然光从窗户洒入，暖色调环境光（色温3200K），营造温馨亲切氛围",
-            "顶光柔和漫射，暖黄色调，光线柔和不刺眼，氛围温暖治愈，家的感觉"
+            "顶光柔和漫射，暖黄色调，光线柔和不刺眼，氛围温暖治愈，家的感觉",
         ],
         "生活场景_真实": [
             "自然环境光，明暗对比自然，符合真实生活场景光线分布，质感真实",
-            "混合光源（自然光+室内灯光），光影层次丰富，真实感强，生活化气息浓厚"
+            "混合光源（自然光+室内灯光），光影层次丰富，真实感强，生活化气息浓厚",
         ],
         "动态场景": [
             "侧逆光强化边缘轮廓，动态光影随运动变化，层次感强，视觉冲击力强",
-            "顶光+侧光组合，光影对比明显，突出动作冲击力和力量感"
+            "顶光+侧光组合，光影对比明显，突出动作冲击力和力量感",
         ],
         "节日喜庆": [
             "暖色调主光（色温3000K），红色金色光效点缀，营造喜庆氛围，节日感拉满",
-            "环境光融入节日元素（灯笼、彩灯），暖光包裹画面，烘托浓厚节日氛围"
-        ]
+            "环境光融入节日元素（灯笼、彩灯），暖光包裹画面，烘托浓厚节日氛围",
+        ],
     },
-    
     # 景深与色调控制
     "visual_aesthetics": {
         "景深_浅": "浅景深虚化背景，焦点精准锁定{主体}，突出主体细节，层次分明",
@@ -104,9 +103,8 @@ PROMPT_KNOWLEDGE_BASE = {
         "色调_冷": "冷色调主导（蓝灰色系），色温5500-6500K，呈现高级质感，专业商务感",
         "色调_高饱和": "高饱和度色彩，色彩鲜明跳跃，视觉冲击力强，活力四射",
         "色调_低饱和": "低饱和度色彩，柔和淡雅，文艺质感，情绪克制",
-        "色调_新年": "红色金色主导，高饱和度，喜庆氛围，新年元素（红灯笼、福字）点缀"
+        "色调_新年": "红色金色主导，高饱和度，喜庆氛围，新年元素（红灯笼、福字）点缀",
     },
-    
     # 音频描述模板
     "audio_templates": {
         "女声旁白": "女性旁白说道：「{content}」，语气{mood}，语速{speed}，声音{tone}",
@@ -116,45 +114,43 @@ PROMPT_KNOWLEDGE_BASE = {
         "BGM_舒缓": "背景音乐为{style}，节奏舒缓，{instruments}，营造{atmosphere}氛围，情绪沉浸",
         "BGM_喜庆": "背景音乐为{style}，节奏欢快，传统乐器（锣鼓、唢呐），烘托喜庆节日氛围",
         "环境音": "{environment}环境音，{specific_sounds}，增强场景真实感和代入感",
-        "音效": "{action}的音效，{sound_quality}，细节清晰，增强画面感染力"
+        "音效": "{action}的音效，{sound_quality}，细节清晰，增强画面感染力",
     },
-    
     # 阿里云典型案例片段（拆解为可复用的模式）
     "aliyun_patterns": {
         "新年一镜到底": {
             "运镜": "10秒一镜到底运镜，全程无剪辑断点，新年喜庆氛围感拉满；镜头慢拉匀速穿过厨房门，顺滑过渡到客厅，无缝摇移至窗户处，紧接着慢推镜头从窗户向外穿出",
             "氛围": "画面融入红灯笼、福字等新年元素，烘托浓厚过年氛围，节日感拉满",
-            "音频": "背景音乐喜庆欢快，背景语音为：「新春快乐，阖家幸福，马年吉祥」"
+            "音频": "背景音乐喜庆欢快，背景语音为：「新春快乐，阖家幸福，马年吉祥」",
         },
         "产品特写递进": {
             "运镜": "特写镜头从产品侧面匀速推进至正面，焦距从f/2.8逐渐收缩至f/1.4",
-            "景深": "景深控制使背景渐进式虚化，突出产品主体，细节清晰可见"
+            "景深": "景深控制使背景渐进式虚化，突出产品主体，细节清晰可见",
         },
         "场景穿梭": {
             "运镜": "镜头从{场景A}穿梭至{场景B}，中间经过{过渡点}，运动连贯流畅",
-            "过渡": "自然衔接，无断点，速度均匀，空间感递进"
-        }
+            "过渡": "自然衔接，无断点，速度均匀，空间感递进",
+        },
     },
-    
     # 营销视频模板精华（从现有10个模板提取）
     "marketing_essentials": {
         "产品展示": {
             "关键词": ["特写镜头", "环绕旋转", "侧光勾勒", "高级感", "产品质感"],
-            "运镜": "镜头缓慢环绕产品旋转，展现360度细节，突出质感和工艺"
+            "运镜": "镜头缓慢环绕产品旋转，展现360度细节，突出质感和工艺",
         },
         "痛点场景": {
             "关键词": ["快节奏切换", "功能特写", "生活化", "实用性"],
-            "运镜": "镜头快速推进到细节，突出功能亮点，节奏明快"
+            "运镜": "镜头快速推进到细节，突出功能亮点，节奏明快",
         },
         "情感共鸣": {
             "关键词": ["暖光", "胶片质感", "虚化背景", "治愈系"],
-            "氛围": "暖色调柔光，营造温馨治愈氛围，情感共鸣"
+            "氛围": "暖色调柔光，营造温馨治愈氛围，情感共鸣",
         },
         "对比冲击": {
             "关键词": ["分屏对比", "强对比光影", "快节奏", "视觉冲击"],
-            "运镜": "快速切换前后对比，视觉冲击力强，转化效果明显"
-        }
-    }
+            "运镜": "快速切换前后对比，视觉冲击力强，转化效果明显",
+        },
+    },
 }
 
 # 保留原有的电影级提示词模板库（作为降级方案）
@@ -163,108 +159,178 @@ CINEMATIC_TEMPLATES = {
     "epic_scifi": {
         "name": "史诗级科幻风",
         "keywords": ["史诗级", "写实风格", "光影对比", "逆光", "烟雾漂浮", "深蓝调"],
-        "适用": "品牌大片、科技产品"
+        "适用": "品牌大片、科技产品",
     },
     "thriller": {
         "name": "心理惊悚风",
-        "keywords": ["写实风格", "冷白光", "手持镜头", "悬疑氛围", "声音细节", "静谧张力"],
-        "适用": "悬疑剧情、情绪类内容"
+        "keywords": [
+            "写实风格",
+            "冷白光",
+            "手持镜头",
+            "悬疑氛围",
+            "声音细节",
+            "静谧张力",
+        ],
+        "适用": "悬疑剧情、情绪类内容",
     },
     "dreamy": {
         "name": "文艺梦境风",
-        "keywords": ["清晨", "雾气", "柔光", "梦境感", "延时镜头", "慢节奏", "光线穿透"],
-        "适用": "文艺内容、治愈系视频"
+        "keywords": [
+            "清晨",
+            "雾气",
+            "柔光",
+            "梦境感",
+            "延时镜头",
+            "慢节奏",
+            "光线穿透",
+        ],
+        "适用": "文艺内容、治愈系视频",
     },
     "action": {
         "name": "动作大片风",
-        "keywords": ["动作大片", "手持镜头", "爆炸", "高速切换", "火光", "残骸", "压迫感"],
-        "适用": "动作场景、冲击力内容"
+        "keywords": [
+            "动作大片",
+            "手持镜头",
+            "爆炸",
+            "高速切换",
+            "火光",
+            "残骸",
+            "压迫感",
+        ],
+        "适用": "动作场景、冲击力内容",
     },
-    
     # 营销视频模板（模板⑤-⑩）
     "product_premium": {
         "name": "产品展示-高端质感型",
-        "keywords": ["特写镜头", "环绕旋转", "侧光勾勒", "焦点切换", "高级感", "产品质感", "虚化背景"],
+        "keywords": [
+            "特写镜头",
+            "环绕旋转",
+            "侧光勾勒",
+            "焦点切换",
+            "高级感",
+            "产品质感",
+            "虚化背景",
+        ],
         "适用": "3C、美妆、轻奢、珠宝",
-        "hook_strategy": "产品环绕旋转"
+        "hook_strategy": "产品环绕旋转",
     },
     "pain_point": {
         "name": "痛点场景-问题解决型",
-        "keywords": ["痛点场景", "功能特写", "快节奏切换", "暖色调", "生活化", "实用性"],
+        "keywords": [
+            "痛点场景",
+            "功能特写",
+            "快节奏切换",
+            "暖色调",
+            "生活化",
+            "实用性",
+        ],
         "适用": "工具、生活用品、家电、厨具",
-        "hook_strategy": "痛点场景展示"
+        "hook_strategy": "痛点场景展示",
     },
     "comparison": {
         "name": "对比冲击-前后反差型",
-        "keywords": ["分屏对比", "动作爆发", "强对比光影", "快节奏", "视觉冲击", "转化导向"],
+        "keywords": [
+            "分屏对比",
+            "动作爆发",
+            "强对比光影",
+            "快节奏",
+            "视觉冲击",
+            "转化导向",
+        ],
         "适用": "清洁、美妆、改造、健身",
-        "hook_strategy": "脏污对比"
+        "hook_strategy": "脏污对比",
     },
     "lifestyle": {
         "name": "场景植入-生活方式型",
-        "keywords": ["场景植入", "生活方式", "情感共鸣", "暖光", "胶片质感", "虚化背景", "治愈系"],
+        "keywords": [
+            "场景植入",
+            "生活方式",
+            "情感共鸣",
+            "暖光",
+            "胶片质感",
+            "虚化背景",
+            "治愈系",
+        ],
         "适用": "家居、美食、母婴、宠物",
-        "hook_strategy": "温馨场景"
+        "hook_strategy": "温馨场景",
     },
     "info_dense": {
         "name": "卖点罗列-信息密集型",
-        "keywords": ["信息密集", "快速切换", "卖点罗列", "动态字幕", "强节奏", "电商风格"],
+        "keywords": [
+            "信息密集",
+            "快速切换",
+            "卖点罗列",
+            "动态字幕",
+            "强节奏",
+            "电商风格",
+        ],
         "适用": "课程、软件、工具、知识付费",
-        "hook_strategy": "卖点弹出"
+        "hook_strategy": "卖点弹出",
     },
     "ugc": {
         "name": "UGC真实感-素人种草型",
-        "keywords": ["UGC风格", "手持晃动", "开箱仪式", "真实感", "生活滤镜", "降低戒备"],
+        "keywords": [
+            "UGC风格",
+            "手持晃动",
+            "开箱仪式",
+            "真实感",
+            "生活滤镜",
+            "降低戒备",
+        ],
         "适用": "口碑营销、测评",
-        "hook_strategy": "开箱展示"
-    }
+        "hook_strategy": "开箱展示",
+    },
 }
 
 
 def detect_video_type(segments: List[Dict]) -> str:
     """
     智能识别视频类型（营销视频 vs 通用创意）
-    
+
     根据分镜数据的特征信号判断视频类型，优先识别为营销视频
     """
     if not segments:
         return "lifestyle"  # 默认生活方式型
-    
+
     signals = {
         "product_focus": 0,  # 产品特写占比
-        "text_overlay": 0,   # 文字标签数量
-        "pace": 0,           # 节奏快慢（分镜切换频率）
-        "human_presence": 0, # 人物出现占比
-        "hand_gesture": 0    # 手部动作（产品展示典型信号）
+        "text_overlay": 0,  # 文字标签数量
+        "pace": 0,  # 节奏快慢（分镜切换频率）
+        "human_presence": 0,  # 人物出现占比
+        "hand_gesture": 0,  # 手部动作（产品展示典型信号）
     }
-    
+
     # 分析每个分镜
     for segment in segments:
         content = segment.get("visual_content", "").lower()
         tags = segment.get("functional_tags", [])
-        
+
         # 产品焦点检测
-        if any(keyword in content for keyword in ["产品", "展示", "特写", "拿起", "手持"]):
+        if any(
+            keyword in content for keyword in ["产品", "展示", "特写", "拿起", "手持"]
+        ):
             signals["product_focus"] += 1
-        
+
         # 文字标签检测
         if "产品介绍" in tags or "价值输出" in tags:
             signals["text_overlay"] += 1
-        
+
         # 节奏检测（短分镜=快节奏）
         if segment.get("duration", 5.0) < 2.5:
             signals["pace"] += 1
-        
+
         # 人物检测
         if any(keyword in content for keyword in ["人物", "女性", "男性", "手", "脸"]):
             signals["human_presence"] += 1
-        
+
         # 手部动作检测（产品展示的强信号）
-        if any(keyword in content for keyword in ["手", "拿起", "握持", "触摸", "打开"]):
+        if any(
+            keyword in content for keyword in ["手", "拿起", "握持", "触摸", "打开"]
+        ):
             signals["hand_gesture"] += 1
-    
+
     total_segments = len(segments)
-    
+
     # 判断逻辑（优先识别为营销视频）
     if signals["product_focus"] > total_segments * 0.5:
         return "product_premium"  # 产品展示型
@@ -282,11 +348,12 @@ def detect_video_type(segments: List[Dict]) -> str:
 
 # ==================== Skill方案：辅助函数 ====================
 
+
 def format_bgm_info(bgm_info: Dict) -> str:
     """将BGM分析结果格式化为可读字符串"""
     if not bgm_info or not bgm_info.get("has_bgm"):
         return "无背景音乐"
-    
+
     parts = []
     if bgm_info.get("style"):
         parts.append(f"风格: {bgm_info['style']}")
@@ -296,23 +363,21 @@ def format_bgm_info(bgm_info: Dict) -> str:
         parts.append(f"节奏: {bgm_info['tempo']}")
     if bgm_info.get("instruments"):
         parts.append(f"乐器: {', '.join(bgm_info['instruments'])}")
-    
+
     return "；".join(parts) if parts else "有背景音乐"
 
 
 # ==================== Skill方案：阶段1 - 特征提取 ====================
 
-async def extract_script_features(
-    segment: Dict,
-    bgm_info: Optional[Dict]
-) -> Dict:
+
+async def extract_script_features(segment: Dict, bgm_info: Optional[Dict]) -> Dict:
     """
     阶段1：LLM提取脚本关键特征
-    
+
     Args:
         segment: 单个分镜数据
         bgm_info: BGM分析结果
-    
+
     Returns:
         结构化特征Dict
     """
@@ -340,53 +405,53 @@ async def extract_script_features(
 营销重点可选：产品展示、场景植入、情感共鸣、痛点解决、对比冲击
 视觉风格可选：高饱和度、低饱和度、自然、胶片质感、简约、新年喜庆
 """
-    
+
     # 从 Vision 分析结果中提取增强的视觉信息
-    visual = segment.get('视觉表现', {})
-    lighting = visual.get('光影', {})
-    color = visual.get('色调', {})
-    depth = visual.get('景深', {})
-    composition = visual.get('构图', {})
-    motion = visual.get('运动', {})
-    
+    visual = segment.get("视觉表现", {})
+    lighting = visual.get("光影", {})
+    color = visual.get("色调", {})
+    depth = visual.get("景深", {})
+    composition = visual.get("构图", {})
+    motion = visual.get("运动", {})
+
     user_message = f"""
 分析以下视频脚本，提取关键特征（仅输出JSON）：
 
 脚本信息：
-- 画面：{segment.get('visual_content', '') or visual.get('画面内容', '无')}
-- 镜头：{segment.get('shot_type', '') or visual.get('景别', '中景')}，{segment.get('camera_movement', '') or visual.get('运镜', '固定')}
-- 场景：{segment.get('scene', '室内')}
-- 功能标签：{', '.join(segment.get('functional_tags', []) or segment.get('内容标签', []))}
-- 语音：{segment.get('speech_text') or '无'}
-- BGM：{format_bgm_info(bgm_info) if bgm_info else '无'}
+- 画面：{segment.get("visual_content", "") or visual.get("画面内容", "无")}
+- 镜头：{segment.get("shot_type", "") or visual.get("景别", "中景")}，{segment.get("camera_movement", "") or visual.get("运镜", "固定")}
+- 场景：{segment.get("scene", "室内")}
+- 功能标签：{", ".join(segment.get("functional_tags", []) or segment.get("内容标签", []))}
+- 语音：{segment.get("speech_text") or "无"}
+- BGM：{format_bgm_info(bgm_info) if bgm_info else "无"}
 
 视觉增强信息：
-- 光影：{lighting.get('光源类型', '未知')} / {lighting.get('光源方向', '未知')} / {lighting.get('明暗对比', '中等')}
-- 色调：{color.get('主色调', '未知')} / {color.get('饱和度', '中等')} / {color.get('色彩氛围', '中性')}
-- 景深：{depth.get('虚化程度', '未知')} / 焦点：{depth.get('焦点主体', '未知')}
-- 构图：{composition.get('主体位置', '未知')} / {composition.get('构图法则', '未知')}
-- 运动：{motion.get('速度', '未知')} / {motion.get('节奏感', '未知')}
+- 光影：{lighting.get("光源类型", "未知")} / {lighting.get("光源方向", "未知")} / {lighting.get("明暗对比", "中等")}
+- 色调：{color.get("主色调", "未知")} / {color.get("饱和度", "中等")} / {color.get("色彩氛围", "中性")}
+- 景深：{depth.get("虚化程度", "未知")} / 焦点：{depth.get("焦点主体", "未知")}
+- 构图：{composition.get("主体位置", "未知")} / {composition.get("构图法则", "未知")}
+- 运动：{motion.get("速度", "未知")} / {motion.get("节奏感", "未知")}
 """
-    
+
     try:
         from video_breakdown_agent.utils.doubao_client import call_doubao_text
-        
+
         response = await call_doubao_text(
             model=os.getenv("MODEL_AGENT_NAME", "doubao-seed-1-6-251015"),
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message}
+                {"role": "user", "content": user_message},
             ],
             temperature=0.3,  # 低温度保证稳定
-            max_tokens=300
+            max_tokens=300,
         )
-        
+
         content = response["choices"][0]["message"]["content"].strip()
         # 尝试解析JSON
         features = json.loads(content)
         logger.info(f"特征提取成功: {features}")
         return features
-        
+
     except Exception as e:
         logger.error(f"特征提取失败: {e}")
         raise
@@ -394,37 +459,39 @@ async def extract_script_features(
 
 # ==================== Skill方案：阶段2 - 知识检索 ====================
 
+
 def retrieve_relevant_knowledge(
-    features: Dict,
-    knowledge_base: Dict = PROMPT_KNOWLEDGE_BASE
+    features: Dict, knowledge_base: Dict = PROMPT_KNOWLEDGE_BASE
 ) -> List[str]:
     """
     阶段2：根据特征检索知识库片段（纯函数，无LLM）
-    
+
     注意：知识库仅作为可选参考，不强制匹配。如果没有匹配项，返回空列表。
-    
+
     Args:
         features: 提取的特征
         knowledge_base: 知识库
-    
+
     Returns:
         相关知识片段列表（可能为空）
     """
     knowledge_pieces = []
-    
+
     # 1. 检索运镜描述（宽松匹配）
     for movement in features.get("运镜类型", []):
         if movement in knowledge_base["camera_movements"]:
             # 随机选择一个描述（避免重复）
             desc = random.choice(knowledge_base["camera_movements"][movement])
             knowledge_pieces.append(f"【运镜参考】{desc}")
-    
+
     # 2. 检索打光描述（宽松匹配，允许不匹配）
     scene_type = features.get("场景氛围", "")
     marketing_focus = features.get("营销重点", "")
-    
+
     # 尝试精确匹配
-    lighting_key = f"{marketing_focus}_{scene_type}" if marketing_focus and scene_type else None
+    lighting_key = (
+        f"{marketing_focus}_{scene_type}" if marketing_focus and scene_type else None
+    )
     if lighting_key and lighting_key in knowledge_base["lighting_setups"]:
         desc = random.choice(knowledge_base["lighting_setups"][lighting_key])
         knowledge_pieces.append(f"【打光参考】{desc}")
@@ -436,11 +503,11 @@ def retrieve_relevant_knowledge(
             knowledge_pieces.append(f"【打光参考】{desc}")
     # 尝试营销重点匹配（但不强制）
     elif marketing_focus == "产品展示":
-        key = f"产品展示_高端"
+        key = "产品展示_高端"
         if key in knowledge_base["lighting_setups"]:
             desc = random.choice(knowledge_base["lighting_setups"][key])
             knowledge_pieces.append(f"【打光参考】{desc}")
-    
+
     # 3. 检索视觉美学（仅在明确匹配时添加）
     visual_style = features.get("视觉风格", "")
     if visual_style:
@@ -448,45 +515,43 @@ def retrieve_relevant_knowledge(
             if visual_style in key or (scene_type and scene_type in key):
                 knowledge_pieces.append(f"【视觉参考】{desc}")
                 break
-    
+
     # 4. 检索音频模板（宽松匹配）
     for audio_element in features.get("音频要素", []):
         for template_key, template in knowledge_base["audio_templates"].items():
             if audio_element in template_key:
                 knowledge_pieces.append(f"【音频参考】{template}")
                 break
-    
+
     # 5. 检索营销模板精华（仅在明确匹配时添加）
     if marketing_focus and marketing_focus in knowledge_base["marketing_essentials"]:
         essentials = knowledge_base["marketing_essentials"][marketing_focus]
         if "运镜" in essentials:
             knowledge_pieces.append(f"【营销参考】{essentials['运镜']}")
-    
+
     if knowledge_pieces:
         logger.info(f"检索到{len(knowledge_pieces)}个相关知识片段作为参考")
     else:
         logger.info("未找到匹配的知识片段，将完全基于原始脚本生成")
-    
+
     return knowledge_pieces
 
 
 # ==================== Skill方案：阶段3 - 组装生成 ====================
 
+
 async def generate_final_prompt(
-    segment: Dict,
-    bgm_info: Optional[Dict],
-    features: Dict,
-    knowledge_pieces: List[str]
+    segment: Dict, bgm_info: Optional[Dict], features: Dict, knowledge_pieces: List[str]
 ) -> str:
     """
     阶段3：基于原始脚本 + 知识片段生成最终提示词
-    
+
     Args:
         segment: 原始分镜数据
         bgm_info: BGM信息
         features: 提取的特征
         knowledge_pieces: 检索到的知识片段
-    
+
     Returns:
         最终视频生成提示词
     """
@@ -509,23 +574,23 @@ async def generate_final_prompt(
 - 结构：主体+场景+运动+运镜+光影+色调+景深+构图+音频+氛围
 - 使用顿号、逗号连接，句号结束
 """
-    
+
     # 提取增强的视觉信息
-    visual = segment.get('视觉表现', {})
-    lighting = visual.get('光影', {})
-    color = visual.get('色调', {})
-    depth = visual.get('景深', {})
-    composition = visual.get('构图', {})
-    motion = visual.get('运动', {})
-    
+    visual = segment.get("视觉表现", {})
+    lighting = visual.get("光影", {})
+    color = visual.get("色调", {})
+    depth = visual.get("景深", {})
+    composition = visual.get("构图", {})
+    motion = visual.get("运动", {})
+
     # 兼容两种数据格式（旧版字段名 / 新版视觉表现）
-    visual_content = segment.get('visual_content', '') or visual.get('画面内容', '无')
-    shot_type = segment.get('shot_type', '') or visual.get('景别', '中景')
-    camera_movement = segment.get('camera_movement', '') or visual.get('运镜', '固定')
-    start_time = segment.get('start_time', segment.get('start', 0))
-    end_time = segment.get('end_time', segment.get('end', 3))
-    duration = segment.get('duration', end_time - start_time)
-    
+    visual_content = segment.get("visual_content", "") or visual.get("画面内容", "无")
+    shot_type = segment.get("shot_type", "") or visual.get("景别", "中景")
+    camera_movement = segment.get("camera_movement", "") or visual.get("运镜", "固定")
+    start_time = segment.get("start_time", segment.get("start", 0))
+    end_time = segment.get("end_time", segment.get("end", 3))
+    duration = segment.get("duration", end_time - start_time)
+
     user_message = f"""
 ## 原始脚本（必须100%遵守）
 
@@ -533,41 +598,41 @@ async def generate_final_prompt(
 
 **画面内容**：{visual_content}
 **镜头**：{shot_type}，{camera_movement}
-**场景**：{segment.get('scene', '室内')}
+**场景**：{segment.get("scene", "室内")}
 
 **光影**：
-- 光源：{lighting.get('光源类型', '自然光')}，{lighting.get('光源方向', '正面光')}
-- 明暗：{lighting.get('明暗对比', '中等')}
-- 阴影：{lighting.get('阴影风格', '柔和阴影')}
+- 光源：{lighting.get("光源类型", "自然光")}，{lighting.get("光源方向", "正面光")}
+- 明暗：{lighting.get("明暗对比", "中等")}
+- 阴影：{lighting.get("阴影风格", "柔和阴影")}
 
 **色调**：
-- 主色调：{color.get('主色调', '中性')}
-- 饱和度：{color.get('饱和度', '中等')}
-- 氛围：{color.get('色彩氛围', '中性')}
-- 滤镜：{color.get('滤镜效果', '无')}
+- 主色调：{color.get("主色调", "中性")}
+- 饱和度：{color.get("饱和度", "中等")}
+- 氛围：{color.get("色彩氛围", "中性")}
+- 滤镜：{color.get("滤镜效果", "无")}
 
 **景深**：
-- 虚化：{depth.get('虚化程度', '中等虚化')}
-- 焦点：{depth.get('焦点主体', '主体')}
-- 范围：{depth.get('景深范围', '中景深')}
+- 虚化：{depth.get("虚化程度", "中等虚化")}
+- 焦点：{depth.get("焦点主体", "主体")}
+- 范围：{depth.get("景深范围", "中景深")}
 
 **构图**：
-- 主体位置：{composition.get('主体位置', '画面中心')}
-- 构图法则：{composition.get('构图法则', '中心构图')}
-- 画面平衡：{composition.get('画面平衡', '对称')}
+- 主体位置：{composition.get("主体位置", "画面中心")}
+- 构图法则：{composition.get("构图法则", "中心构图")}
+- 画面平衡：{composition.get("画面平衡", "对称")}
 
 **运动**：
-- 速度：{motion.get('速度', '中速')}
-- 节奏：{motion.get('节奏感', '流畅')}
-- 特效：{motion.get('特殊效果', '无')}
+- 速度：{motion.get("速度", "中速")}
+- 节奏：{motion.get("节奏感", "流畅")}
+- 特效：{motion.get("特殊效果", "无")}
 
 **音频**：
-- 语音：{segment.get('speech_text') or '无'}
-- BGM：{format_bgm_info(bgm_info) if bgm_info else '无'}
+- 语音：{segment.get("speech_text") or "无"}
+- BGM：{format_bgm_info(bgm_info) if bgm_info else "无"}
 
 ## 参考知识片段（可选，仅在相关时参考）
 
-{chr(10).join(knowledge_pieces) if knowledge_pieces else '（无相关知识片段，请完全基于原始脚本自主生成）'}
+{chr(10).join(knowledge_pieces) if knowledge_pieces else "（无相关知识片段，请完全基于原始脚本自主生成）"}
 
 ## 生成要求
 
@@ -579,24 +644,24 @@ async def generate_final_prompt(
 
 生成提示词：
 """
-    
+
     try:
         from video_breakdown_agent.utils.doubao_client import call_doubao_text
-        
+
         response = await call_doubao_text(
             model=os.getenv("MODEL_AGENT_NAME", "doubao-seed-1-6-251015"),
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_message}
+                {"role": "user", "content": user_message},
             ],
             temperature=0.7,  # 适度创意
-            max_tokens=600
+            max_tokens=600,
         )
-        
+
         prompt = response["choices"][0]["message"]["content"].strip()
         logger.info(f"最终提示词生成成功（{len(prompt)}字）")
         return prompt
-        
+
     except Exception as e:
         logger.error(f"最终提示词生成失败: {e}")
         raise
@@ -604,7 +669,10 @@ async def generate_final_prompt(
 
 # ==================== 降级方案：单阶段LLM ====================
 
-async def generate_single_stage_llm_prompt(segment: Dict, bgm_info: Optional[Dict]) -> str:
+
+async def generate_single_stage_llm_prompt(
+    segment: Dict, bgm_info: Optional[Dict]
+) -> str:
     """单阶段LLM直接生成（降级方案1）"""
     system_prompt = """
 你是视频提示词专家。基于原始脚本，生成专业视频生成提示词。
@@ -612,45 +680,46 @@ async def generate_single_stage_llm_prompt(segment: Dict, bgm_info: Optional[Dic
 输出格式：单段落，150-300字，包含主体+场景+运动+运镜+光影+色调+景深+构图+音频。
 重点强化：将光影、色调、景深、构图、运动细节自然融入提示词。
 """
-    
+
     # 提取增强的视觉信息
-    visual = segment.get('视觉表现', {})
-    lighting = visual.get('光影', {})
-    color = visual.get('色调', {})
-    depth = visual.get('景深', {})
-    composition = visual.get('构图', {})
-    motion = visual.get('运动', {})
-    
+    visual = segment.get("视觉表现", {})
+    lighting = visual.get("光影", {})
+    color = visual.get("色调", {})
+    depth = visual.get("景深", {})
+    composition = visual.get("构图", {})
+    motion = visual.get("运动", {})
+
     # 兼容两种数据格式
-    visual_content = segment.get('visual_content', '') or visual.get('画面内容', '无')
-    shot_type = segment.get('shot_type', '') or visual.get('景别', '中景')
-    camera_movement = segment.get('camera_movement', '') or visual.get('运镜', '固定')
-    
+    visual_content = segment.get("visual_content", "") or visual.get("画面内容", "无")
+    shot_type = segment.get("shot_type", "") or visual.get("景别", "中景")
+    camera_movement = segment.get("camera_movement", "") or visual.get("运镜", "固定")
+
     user_message = f"""
 脚本：
 - 画面：{visual_content}
 - 镜头：{shot_type}，{camera_movement}
-- 场景：{segment.get('scene', '室内')}
-- 光影：{lighting.get('光源类型', '未知')}/{lighting.get('光源方向', '未知')}/{lighting.get('明暗对比', '中等')}
-- 色调：{color.get('主色调', '未知')}/{color.get('饱和度', '中等')}/{color.get('色彩氛围', '中性')}
-- 景深：{depth.get('虚化程度', '未知')}/焦点：{depth.get('焦点主体', '未知')}
-- 构图：{composition.get('主体位置', '未知')}/{composition.get('构图法则', '未知')}
-- 运动：{motion.get('速度', '未知')}/{motion.get('节奏感', '未知')}
-- 语音：{segment.get('speech_text') or '无'}
-- BGM：{format_bgm_info(bgm_info) if bgm_info else '无'}
+- 场景：{segment.get("scene", "室内")}
+- 光影：{lighting.get("光源类型", "未知")}/{lighting.get("光源方向", "未知")}/{lighting.get("明暗对比", "中等")}
+- 色调：{color.get("主色调", "未知")}/{color.get("饱和度", "中等")}/{color.get("色彩氛围", "中性")}
+- 景深：{depth.get("虚化程度", "未知")}/焦点：{depth.get("焦点主体", "未知")}
+- 构图：{composition.get("主体位置", "未知")}/{composition.get("构图法则", "未知")}
+- 运动：{motion.get("速度", "未知")}/{motion.get("节奏感", "未知")}
+- 语音：{segment.get("speech_text") or "无"}
+- BGM：{format_bgm_info(bgm_info) if bgm_info else "无"}
 
 生成专业提示词：
 """
-    
+
     from video_breakdown_agent.utils.doubao_client import call_doubao_text
+
     response = await call_doubao_text(
         model=os.getenv("MODEL_AGENT_NAME", "doubao-seed-1-6-251015"),
         messages=[
             {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_message}
+            {"role": "user", "content": user_message},
         ],
         temperature=0.7,
-        max_tokens=500
+        max_tokens=500,
     )
     return response["choices"][0]["message"]["content"].strip()
 
@@ -659,21 +728,19 @@ async def generate_single_stage_llm_prompt(segment: Dict, bgm_info: Optional[Dic
 
 
 def build_cinematic_prompt(
-    segment: Dict,
-    template_key: str,
-    style_config: Optional[Dict] = None
+    segment: Dict, template_key: str, style_config: Optional[Dict] = None
 ) -> str:
     """
     基于电影级标准范式构建提示词
-    
+
     黄金结构公式：
     [时间] + [场景空间] + [人物与动作] + [镜头语言] + [光影氛围] + [风格关键词] + [节奏描述]
-    
+
     Args:
         segment: 分镜数据
         template_key: 模板key
         style_config: 风格配置（可选）
-    
+
     Returns:
         电影级提示词字符串
     """
@@ -683,25 +750,25 @@ def build_cinematic_prompt(
     camera_movement = segment.get("camera_movement", "固定")
     scene = segment.get("scene", "室内场景")
     duration = segment.get("duration", 3.0)
-    
+
     # 获取模板
     template = CINEMATIC_TEMPLATES.get(template_key, CINEMATIC_TEMPLATES["lifestyle"])
-    
+
     # 从视觉内容中提取关键元素
     # 1. 时间（默认推断）
     time_of_day = "午后" if "阳光" in visual_content else "室内光线下"
-    
+
     # 2. 场景空间
     scene_space = scene if scene else "简约背景"
-    
+
     # 3. 人物与动作
     subject_action = visual_content if visual_content else "产品静态展示"
-    
+
     # 4. 镜头语言
     camera_desc = f"{shot_type}镜头"
     if camera_movement and camera_movement != "固定":
         camera_desc += f"，{camera_movement}"
-    
+
     # 根据模板类型添加镜头运动
     if template_key in ["product_premium", "comparison"]:
         camera_desc += "，镜头缓慢环绕产品旋转"
@@ -709,19 +776,23 @@ def build_cinematic_prompt(
         camera_desc += "，手持跟拍（略带晃动）"
     elif template_key == "pain_point":
         camera_desc += "，镜头快速推进到细节"
-    
+
     # 5. 光影氛围
-    lighting = "柔和自然光" if "柔和" in visual_content or "自然" in visual_content else "均匀打光"
+    lighting = (
+        "柔和自然光"
+        if "柔和" in visual_content or "自然" in visual_content
+        else "均匀打光"
+    )
     if template_key == "product_premium":
         lighting += "，侧光勾勒产品轮廓，高光反射细腻质感"
     elif template_key == "thriller":
         lighting = "冷白光下墙壁反射出微光"
     elif template_key == "epic_scifi":
         lighting = "逆光照亮边缘，烟雾与光线交织"
-    
+
     # 6. 风格关键词
     style_keywords = "、".join(template["keywords"][:3])
-    
+
     # 7. 节奏描述
     if duration < 2.0:
         pace = "节奏极快，信息密度高"
@@ -731,7 +802,7 @@ def build_cinematic_prompt(
         pace = "节奏舒缓，呼吸感强"
     else:
         pace = "节奏缓慢克制，沉浸感强"
-    
+
     # 组合提示词
     prompt_parts = [
         f"{time_of_day}，{scene_space}，",
@@ -739,14 +810,14 @@ def build_cinematic_prompt(
         f"{camera_desc}，",
         f"{lighting}，",
         f"{style_keywords}，",
-        f"{pace}。"
+        f"{pace}。",
     ]
-    
+
     cinematic_prompt = "".join(prompt_parts)
-    
+
     # 清理多余逗号和空格
     cinematic_prompt = cinematic_prompt.replace("，，", "，").replace("  ", " ").strip()
-    
+
     return cinematic_prompt
 
 
@@ -755,23 +826,23 @@ async def generate_video_prompts(
     use_skill_mode: bool = True,  # 默认启用Skill模式
     user_product_type: Optional[str] = None,
     force_template: Optional[str] = None,
-    style_transfer_config: Optional[Dict] = None
+    style_transfer_config: Optional[Dict] = None,
 ) -> Dict:
     """
     生成视频提示词工具（Skill模式主导，三级降级）
-    
+
     工作模式：
     1. Skill模式（默认）：特征提取 → 知识检索 → 组装生成
     2. 单阶段LLM（降级1）：直接LLM生成
     3. 函数模板（降级2）：纯函数生成
-    
+
     Args:
         tool_context: 工具上下文（包含session state）
         use_skill_mode: 是否启用Skill模式（默认True）
         user_product_type: 用户指定的产品类型（可选）
         force_template: 强制使用指定模板（可选）
         style_transfer_config: 风格迁移配置（可选）
-    
+
     Returns:
         {
             "status": "success" | "error",
@@ -785,103 +856,125 @@ async def generate_video_prompts(
         # 读取分镜数据
         vision_result = tool_context.state.get("vision_analysis_result")
         bgm_result = tool_context.state.get("bgm_analysis_result")
-        
+
         if not vision_result:
             return {
                 "status": "error",
                 "message": "未找到分镜数据，请先执行视频拆解（breakdown_agent）",
                 "prompts": [],
-                "total_count": 0
+                "total_count": 0,
             }
-        
+
         segments = vision_result.get("segments", [])
-        
+
         if not segments:
             return {
                 "status": "error",
                 "message": "分镜数据为空",
                 "prompts": [],
-                "total_count": 0
+                "total_count": 0,
             }
-        
-        logger.info(f"开始生成提示词，共{len(segments)}个分镜，模式: {'Skill' if use_skill_mode else '函数'}")
-        
+
+        logger.info(
+            f"开始生成提示词，共{len(segments)}个分镜，模式: {'Skill' if use_skill_mode else '函数'}"
+        )
+
         prompts = []
-        
+
         for idx, segment in enumerate(segments, start=1):
             # 向后兼容：为旧版数据（缺少增强视觉维度）补充默认值
-            visual = segment.get('视觉表现', {})
-            if '光影' not in visual:
-                visual['光影'] = {"光源类型": "自然光", "光源方向": "正面光", "明暗对比": "中等", "阴影风格": "柔和阴影"}
-            if '色调' not in visual:
-                visual['色调'] = {"主色调": "自然", "饱和度": "中等", "色彩氛围": "中性", "滤镜效果": "无"}
-            if '景深' not in visual:
-                visual['景深'] = {"虚化程度": "中等虚化", "焦点主体": "主体", "景深范围": "中景深"}
-            if '构图' not in visual:
-                visual['构图'] = {"主体位置": "画面中心", "构图法则": "中心构图", "画面平衡": "对称"}
-            if '运动' not in visual:
-                visual['运动'] = {"速度": "中速", "节奏感": "流畅", "特殊效果": "无"}
-            segment['视觉表现'] = visual
-            
+            visual = segment.get("视觉表现", {})
+            if "光影" not in visual:
+                visual["光影"] = {
+                    "光源类型": "自然光",
+                    "光源方向": "正面光",
+                    "明暗对比": "中等",
+                    "阴影风格": "柔和阴影",
+                }
+            if "色调" not in visual:
+                visual["色调"] = {
+                    "主色调": "自然",
+                    "饱和度": "中等",
+                    "色彩氛围": "中性",
+                    "滤镜效果": "无",
+                }
+            if "景深" not in visual:
+                visual["景深"] = {
+                    "虚化程度": "中等虚化",
+                    "焦点主体": "主体",
+                    "景深范围": "中景深",
+                }
+            if "构图" not in visual:
+                visual["构图"] = {
+                    "主体位置": "画面中心",
+                    "构图法则": "中心构图",
+                    "画面平衡": "对称",
+                }
+            if "运动" not in visual:
+                visual["运动"] = {"速度": "中速", "节奏感": "流畅", "特殊效果": "无"}
+            segment["视觉表现"] = visual
+
             prompt_text = None
             generation_method = "unknown"
             features = None
             knowledge_pieces = []
-            
+
             # 模式1：Skill三阶段
             if use_skill_mode:
                 try:
                     # 阶段1：特征提取
                     features = await extract_script_features(segment, bgm_result)
-                    
+
                     # 阶段2：知识检索
                     knowledge_pieces = retrieve_relevant_knowledge(features)
-                    
+
                     # 阶段3：组装生成
                     prompt_text = await generate_final_prompt(
                         segment, bgm_result, features, knowledge_pieces
                     )
                     generation_method = "skill"
                     logger.info(f"分镜{idx}: Skill模式生成成功")
-                    
+
                 except Exception as e:
                     logger.warning(f"分镜{idx}: Skill模式失败，尝试降级 - {e}")
                     prompt_text = None
-            
+
             # 降级1：单阶段LLM（如果Skill失败）
             if prompt_text is None and use_skill_mode:
                 try:
-                    prompt_text = await generate_single_stage_llm_prompt(segment, bgm_result)
+                    prompt_text = await generate_single_stage_llm_prompt(
+                        segment, bgm_result
+                    )
                     generation_method = "llm_single"
                     logger.info(f"分镜{idx}: 单阶段LLM降级成功")
                 except Exception as e:
                     logger.warning(f"分镜{idx}: LLM降级失败 - {e}")
                     prompt_text = None
-            
+
             # 降级2：函数模板（最终兜底）
             if prompt_text is None:
                 template_key = force_template or detect_video_type(segments)
                 prompt_text = build_cinematic_prompt(
                     segment=segment,
                     template_key=template_key,
-                    style_config=style_transfer_config
+                    style_config=style_transfer_config,
                 )
                 generation_method = "function"
                 logger.info(f"分镜{idx}: 函数模板生成")
-            
+
             # 负向提示词（通用）
             negative_prompt = "模糊，扭曲，低质量，失焦，噪点，水印"
-            
+
             # 参考首帧
             first_frame = None
             frame_urls = segment.get("frame_urls", [])
             if frame_urls:
                 first_frame = frame_urls[0]
-            
+
             # 预估费用（基于时长）
             duration = segment.get("duration", 3.0)
             estimated_cost = round(duration * 1.5, 2)  # 假设每秒1.5元
-            
+
             # 构建结果
             prompt_data = {
                 "segment_index": idx,
@@ -899,20 +992,20 @@ async def generate_video_prompts(
                 "generation_method": generation_method,
                 "extracted_features": features,  # 保留特征用于调试
                 "knowledge_used": len(knowledge_pieces),  # 使用的知识片段数
-                "original_segment_data": segment
+                "original_segment_data": segment,
             }
-            
+
             prompts.append(prompt_data)
-        
+
         # 统计生成方式
         method_counts = {}
         for p in prompts:
             method = p["generation_method"]
             method_counts[method] = method_counts.get(method, 0) + 1
-        
+
         # 计算总费用（仅选中的）
         total_cost = sum(p["estimated_cost"] for p in prompts if p["selected"])
-        
+
         # 存入session state
         tool_context.state["pending_prompts"] = {
             "prompts": prompts,
@@ -920,11 +1013,11 @@ async def generate_video_prompts(
             "total_selected": 1,  # 默认选中1个
             "total_duration": sum(p["duration"] for p in prompts if p["selected"]),
             "total_cost": total_cost,
-            "generation_stats": method_counts
+            "generation_stats": method_counts,
         }
-        
+
         logger.info(f"✅ 提示词生成完成，统计: {method_counts}")
-        
+
         return {
             "status": "success",
             "prompts": prompts,
@@ -932,14 +1025,14 @@ async def generate_video_prompts(
             "total_selected": 1,
             "total_cost": total_cost,
             "generation_stats": method_counts,
-            "message": f"成功生成{len(prompts)}个分镜的提示词，默认选中分镜1（前3秒）"
+            "message": f"成功生成{len(prompts)}个分镜的提示词，默认选中分镜1（前3秒）",
         }
-        
+
     except Exception as e:
         logger.error(f"生成提示词失败: {e}", exc_info=True)
         return {
             "status": "error",
             "message": f"生成提示词失败: {str(e)}",
             "prompts": [],
-            "total_count": 0
+            "total_count": 0,
         }

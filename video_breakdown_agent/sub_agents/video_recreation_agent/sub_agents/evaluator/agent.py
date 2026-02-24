@@ -1,6 +1,7 @@
 """
 评估Sub-Agent
 """
+
 from veadk import Agent
 from veadk.config import getenv
 
@@ -13,7 +14,7 @@ def create_evaluator_agent() -> Agent:
     """
     创建评估Agent（骨架实现）
     """
-    
+
     evaluator_agent = Agent(
         name="evaluator_agent",
         description="评估复刻视频质量，对比原片数据",
@@ -28,7 +29,7 @@ def create_evaluator_agent() -> Agent:
             }
         },
     )
-    
+
     return evaluator_agent
 
 

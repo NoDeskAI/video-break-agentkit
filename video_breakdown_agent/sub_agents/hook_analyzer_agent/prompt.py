@@ -61,7 +61,7 @@ HOOK_ANALYZER_INSTRUCTION = """
 
 ## 输出格式
 
-此步骤（hook_analysis_agent）只输出**结构化自然语言分析**，用于提供给下一步 `hook_format_agent` 做结果整理。  
+此步骤（hook_analysis_agent）只输出**结构化自然语言分析**，用于提供给下一步 `hook_format_agent` 做结果整理。
 请勿在此步骤输出 JSON、代码块或函数调用片段。
 
 **重要：每个维度必须包含明确的数字分数（0-10分）。**

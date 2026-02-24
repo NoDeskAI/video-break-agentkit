@@ -2,7 +2,7 @@
 沙箱环境管理器
 提供沙箱的启动、停止、重置、健康检查等功能
 """
-import os
+
 import subprocess
 import sys
 import time
@@ -29,7 +29,7 @@ class SandboxManager:
             example_env = self.sandbox_dir / "sandbox.env.example"
             if example_env.exists():
                 print(
-                    f"警告: 未找到 .env 文件，请复制 sandbox.env.example 为 .env 并填入配置"
+                    "警告: 未找到 .env 文件，请复制 sandbox.env.example 为 .env 并填入配置"
                 )
                 print(f"  cp {example_env} {self.env_file}")
                 return
@@ -46,7 +46,9 @@ class SandboxManager:
         if rebuild:
             cmd.insert(-1, "--build")
 
-        result = subprocess.run(cmd, capture_output=True, text=True, cwd=str(self.sandbox_dir))
+        result = subprocess.run(
+            cmd, capture_output=True, text=True, cwd=str(self.sandbox_dir)
+        )
         if result.returncode != 0:
             print(f"沙箱启动失败: {result.stderr}")
             raise Exception(f"沙箱启动失败: {result.stderr}")
@@ -55,8 +57,8 @@ class SandboxManager:
         self.wait_for_health()
         print("沙箱环境已启动")
         print(f"  API 地址: {self.api_url}")
-        print(f"  MySQL: localhost:3307")
-        print(f"  Redis: localhost:6380")
+        print("  MySQL: localhost:3307")
+        print("  Redis: localhost:6380")
 
     def stop(self):
         """停止沙箱环境（保留数据）"""
@@ -169,12 +171,8 @@ class SandboxManager:
                             f"{self.api_url}/api/v1/breakdown/result/{task_id}"
                         )
                         result_data = response.json()["data"]
-                        print(
-                            f"  分镜数: {result_data.get('segment_count', 0)}"
-                        )
-                        print(
-                            f"  时长: {result_data.get('duration', 0):.1f}s"
-                        )
+                        print(f"  分镜数: {result_data.get('segment_count', 0)}")
+                        print(f"  时长: {result_data.get('duration', 0):.1f}s")
                         return task_id
                     elif current_status == "failed":
                         print(

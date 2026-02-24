@@ -14,6 +14,7 @@ Video Breakdown Agent — 最小联调/冒烟测试脚本
 
 依赖：需要在项目根目录下已有 config.yaml 或 .env 配置。
 """
+
 import asyncio
 import sys
 import os
@@ -29,9 +30,9 @@ async def run_single(message: str) -> str:
     # 延迟导入，让 sys.path 先生效
     from agent import runner  # noqa: E402
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"📤 发送: {message}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     result = await runner.run(
         messages=message,
@@ -39,9 +40,9 @@ async def run_single(message: str) -> str:
         session_id="smoke_test_session",
     )
 
-    print(f"\n{'='*60}")
-    print(f"📥 回复:")
-    print(f"{'='*60}")
+    print(f"\n{'=' * 60}")
+    print("📥 回复:")
+    print(f"{'=' * 60}")
     print(result)
     return result
 
@@ -93,7 +94,9 @@ def _looks_like_raw_json(text: str) -> bool:
     )
 
 
-def _assert_case_output(case_name: str, output: str, expected_keywords: list[str]) -> None:
+def _assert_case_output(
+    case_name: str, output: str, expected_keywords: list[str]
+) -> None:
     lowered = (output or "").lower()
     if "<[plhd" in lowered or "transfer_to_agent" in lowered:
         raise AssertionError(f"{case_name}: 检测到内部占位/转移片段泄露")
@@ -112,13 +115,12 @@ async def run_pipeline_cases() -> None:
 
     session_id = f"pipeline_case_{os.getpid()}"
     user_id = "smoke_test_user"
-    
+
     # 使用实际测试视频（如果项目内有 .media-uploads 中的测试样本）
     test_video = os.getenv(
-        "TEST_VIDEO_URL",
-        "https://tos-cn-beijing.volces.com/obj/video-demo/sample.mp4"
+        "TEST_VIDEO_URL", "https://tos-cn-beijing.volces.com/obj/video-demo/sample.mp4"
     )
-    
+
     # 检查本地测试视频
     local_test_videos = list(Path(PROJECT_ROOT / ".media-uploads").glob("*.mp4"))
     if local_test_videos:
@@ -178,7 +180,7 @@ async def run_pipeline_cases() -> None:
     print("\n" + "=" * 60)
     print(f"Results: {passed} passed, {failed} failed")
     print("=" * 60)
-    
+
     if failed > 0:
         sys.exit(1)
 
