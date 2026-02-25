@@ -5,6 +5,7 @@
 VeADK 支持 Agent 同时持有 tools 和 sub_agents（video_recreation_agent 已验证）。
 """
 
+import json as _json
 import logging
 import os
 
@@ -35,6 +36,39 @@ from .sub_agents.video_recreation_agent.agent import video_recreation_agent
 
 
 logger = logging.getLogger(__name__)
+
+# ==================== Monkey-patch: lite_llm JSON 解析容错 ====================
+# 问题：LLM 有时在 transfer_to_agent 的参数 JSON 后附加额外文本，导致
+#       google.adk.models.lite_llm._message_to_generate_content_response 中
+#       json.loads(tool_call.function.arguments) 抛出 "Extra data" JSONDecodeError。
+# 修复：将 lite_llm 模块使用的 json 引用替换为带 json_repair fallback 的包装，
+#       仅在 json.loads 失败时才触发修复，其余行为完全不变。
+try:
+    import json_repair as _json_repair
+    import google.adk.models.lite_llm as _adk_lite_llm
+
+    class _JsonWithRepairFallback:
+        """json 模块的 drop-in 替换，loads 失败时回退到 json_repair.loads。"""
+
+        def loads(self, s, **kwargs):
+            try:
+                return _json.loads(s, **kwargs)
+            except _json.JSONDecodeError as exc:
+                logger.warning(
+                    "[json_patch] function call arguments JSON 解析失败 (%s)，"
+                    "尝试 json_repair 修复（前120字符: %r）",
+                    exc,
+                    str(s)[:120],
+                )
+                return _json_repair.loads(s)
+
+        def __getattr__(self, name):
+            return getattr(_json, name)
+
+    _adk_lite_llm.json = _JsonWithRepairFallback()
+    logger.info("[json_patch] lite_llm.json 已替换为 json_repair fallback 包装")
+except Exception as _patch_err:
+    logger.warning("[json_patch] 补丁未生效（不影响正常运行）: %s", _patch_err)
 
 # ==================== 内容安全护栏（LLM Shield） ====================
 # 仅当配置了 TOOL_LLM_SHIELD_APP_ID 时启用，否则静默跳过
