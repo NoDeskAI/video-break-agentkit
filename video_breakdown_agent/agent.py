@@ -5,7 +5,6 @@
 VeADK 支持 Agent 同时持有 tools 和 sub_agents（video_recreation_agent 已验证）。
 """
 
-import json as _json
 import logging
 import os
 
@@ -17,6 +16,7 @@ from veadk.memory.short_term_memory import ShortTermMemory
 from veadk.tools.builtin_tools.web_search import web_search
 
 from .hook.final_output_hook import guard_final_user_output
+from .hook.tool_call_guard import guard_tool_calls
 from .hook.video_upload_hook import hook_video_upload
 from .prompt import ROOT_AGENT_INSTRUCTION
 from .sub_agents.breakdown_agent.prompt import (
@@ -40,41 +40,103 @@ from .sub_agents.video_recreation_agent.agent import video_recreation_agent
 
 logger = logging.getLogger(__name__)
 
-# ==================== Monkey-patch: lite_llm JSON 解析容错 ====================
-# 问题：LLM 有时在 transfer_to_agent 的参数 JSON 后附加额外文本，导致
-#       google.adk.models.lite_llm._message_to_generate_content_response 中
-#       json.loads(tool_call.function.arguments) 抛出 "Extra data" JSONDecodeError。
-# 修复：将 lite_llm 模块使用的 json 引用替换为带 json_repair fallback 的包装，
-#       仅在 json.loads 失败时才触发修复，其余行为完全不变。
+# ==================== Monkey-patch: Part.from_function_call args 归一化 ====================
+# 问题：云端 LLM 偶发返回 function_call.args = ''（空字符串），
+#       google.genai.types.FunctionCall(name, args='') Pydantic 校验直接崩溃，
+#       该路径早于所有 after_model_callback，仅 patch json.loads 无法覆盖此分支。
+# 修复：包装 Part.from_function_call，强制将非 dict 的 args 归一化为 dict 后再调用原函数。
 try:
-    import json_repair as _json_repair
-    import google.adk.models.lite_llm as _adk_lite_llm
+    import google.genai.types as _genai_types
 
-    class _JsonWithRepairFallback:
-        """json 模块的 drop-in 替换，loads 失败时回退到 json_repair.loads。"""
+    # 直接保存原始函数引用（从类访问 staticmethod 已自动解包为普通函数）
+    _orig_from_function_call = _genai_types.Part.from_function_call
 
-        def loads(self, s, **kwargs):
-            # LLM 有时对无参数工具生成空字符串 args，直接返回空 dict 避免 Pydantic 校验失败
-            if not s or (isinstance(s, str) and not s.strip()):
-                return {}
+    def _safe_args(raw_args) -> dict:
+        """将任意 args 归一化为 dict：None/''/非 dict 均安全转换。"""
+        if raw_args is None or (isinstance(raw_args, str) and not raw_args.strip()):
+            return {}
+        if isinstance(raw_args, dict):
+            return raw_args
+        if isinstance(raw_args, str):
             try:
-                return _json.loads(s, **kwargs)
-            except _json.JSONDecodeError as exc:
-                logger.warning(
-                    "[json_patch] function call arguments JSON 解析失败 (%s)，"
-                    "尝试 json_repair 修复（前120字符: %r）",
-                    exc,
-                    str(s)[:120],
-                )
-                return _json_repair.loads(s)
+                import json_repair as _jr
+
+                parsed = _jr.loads(raw_args)
+                return parsed if isinstance(parsed, dict) else {}
+            except Exception:
+                return {}
+        return {}
+
+    def _patched_from_function_call(name: str, args=None, **kwargs):
+        orig_args = args
+        safe = _safe_args(args)
+        if not isinstance(orig_args, dict):
+            logger.warning(
+                "[args_patch] Part.from_function_call args 类型异常 (type=%s, repr=%r)，已归一化为 {}",
+                type(orig_args).__name__,
+                str(orig_args)[:80],
+            )
+        return _orig_from_function_call(name=name, args=safe, **kwargs)
+
+    # 用 staticmethod 包装后赋回类属性，保持与原调用方式一致
+    _genai_types.Part.from_function_call = staticmethod(_patched_from_function_call)
+    logger.info("[args_patch] Part.from_function_call 已替换为 args 归一化包装")
+except Exception as _args_patch_err:
+    logger.warning("[args_patch] 补丁未生效（不影响正常运行）: %s", _args_patch_err)
+
+# ==================== Monkey-patch: lite_llm json.loads 失败兜底 ====================
+# 问题：云端 LLM 偶发在 function_call.arguments 后追加多余文字，导致
+#       json.loads(arguments) 抛 JSONDecodeError("Extra data")，SDK 未 catch 直接崩溃。
+# 修复：仅在 json.loads 抛异常时介入（正常 JSON 路径完全不变）：
+#       1. raw_decode：提取首个合法 JSON 对象（覆盖 "Extra data" 场景）
+#       2. json_repair：修复更严重的畸形 JSON
+#       3. 兜底返回 {}
+try:
+    import google.adk.models.lite_llm as _lite_llm
+
+    _orig_lite_llm_json = _lite_llm.json  # 保存原始 json 模块引用
+
+    class _SafeJsonProxy:
+        """透传所有 json 操作；仅 loads 失败时做 fallback，不影响正常解析路径。"""
 
         def __getattr__(self, name):
-            return getattr(_json, name)
+            return getattr(_orig_lite_llm_json, name)
 
-    _adk_lite_llm.json = _JsonWithRepairFallback()
-    logger.info("[json_patch] lite_llm.json 已替换为 json_repair fallback 包装")
-except Exception as _patch_err:
-    logger.warning("[json_patch] 补丁未生效（不影响正常运行）: %s", _patch_err)
+        def loads(self, s, *args, **kwargs):
+            try:
+                return _orig_lite_llm_json.loads(s, *args, **kwargs)
+            except _orig_lite_llm_json.JSONDecodeError as _e:
+                # fallback 1: raw_decode —— 提取第一个合法 JSON 对象，忽略尾部多余数据
+                try:
+                    result, _ = _orig_lite_llm_json.JSONDecoder().raw_decode(str(s))
+                    if isinstance(result, dict):
+                        logger.warning(
+                            "[json_patch] json.loads 失败(%s)，raw_decode 成功，已提取首个 JSON 对象",
+                            _e,
+                        )
+                        return result
+                except Exception:
+                    pass
+                # fallback 2: json_repair
+                try:
+                    import json_repair as _jr2
+
+                    result = _jr2.loads(str(s))
+                    if isinstance(result, dict):
+                        logger.warning(
+                            "[json_patch] json.loads 失败(%s)，json_repair 成功",
+                            _e,
+                        )
+                        return result
+                except Exception:
+                    pass
+                logger.warning("[json_patch] json.loads 失败(%s)，兜底返回 {}", _e)
+                return {}
+
+    _lite_llm.json = _SafeJsonProxy()
+    logger.info("[json_patch] lite_llm.json 已替换为失败兜底代理")
+except Exception as _json_patch_err:
+    logger.warning("[json_patch] 补丁未生效（不影响正常运行）: %s", _json_patch_err)
 
 # ==================== 内容安全护栏（LLM Shield） ====================
 # 仅当配置了 TOOL_LLM_SHIELD_APP_ID 时启用，否则静默跳过
@@ -98,6 +160,8 @@ root_before_model_callback = shield_callbacks.get("before_model_callback")
 root_after_model_callbacks = []
 if shield_callbacks.get("after_model_callback"):
     root_after_model_callbacks.append(shield_callbacks["after_model_callback"])
+# 工具调用防呆：拦截空工具名 / transfer_to_agent 缺 agent_name（必须在最终输出守卫之前）
+root_after_model_callbacks.append(guard_tool_calls)
 # 最后一层输出守卫：仅在泄露过程信息时触发 LLM 重写
 root_after_model_callbacks.append(guard_final_user_output)
 root_callback_kwargs = {
