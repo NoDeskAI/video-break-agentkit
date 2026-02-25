@@ -11,7 +11,6 @@ from veadk.config import getenv
 
 from ...tools.generate_video_prompts import generate_video_prompts
 from ...tools.style_transfer import style_transfer
-from ...tools.review_prompts import review_prompts
 from ...hook.format_hook import fix_prompt_output
 from ...utils.types import json_response_config, VideoPromptList
 from .prompt import PROMPT_GENERATOR_INSTRUCTION, PROMPT_FORMAT_INSTRUCTION
@@ -30,7 +29,7 @@ def create_prompt_generator_agent() -> SequentialAgent:
         tools=[generate_video_prompts, style_transfer],  # 集成工具
         model_extra_config={
             "extra_body": {
-                "thinking": {"type": getenv("THINKING_PROMPT_GENERATOR", "enabled")}
+                "thinking": {"type": getenv("THINKING_PROMPT_GENERATOR", "disabled")}
             }
         },
     )
@@ -54,19 +53,11 @@ def create_prompt_generator_agent() -> SequentialAgent:
         },
     )
 
-    # 人工审核Agent
-    prompt_review_agent = Agent(
-        name="prompt_review_agent",
-        description="展示生成的提示词，等待用户选择要生成的分镜",
-        instruction="你负责展示生成的提示词，让用户选择要生成的分镜。调用review_prompts工具展示提示词列表。",
-        tools=[review_prompts],  # 集成工具
-    )
-
-    # 完整提示词生成流程（生成 → 格式化 → 审核）
+    # 提示词生成流程（生成 → 格式化），格式化完成后由 output_key 直接透传
     prompt_generator_agent = SequentialAgent(
         name="prompt_generator_agent",
-        description="提示词生成流程：生成 → 格式化 → 用户审核",
-        sub_agents=[prompt_generate_agent, prompt_format_agent, prompt_review_agent],
+        description="提示词生成流程：生成 → 格式化",
+        sub_agents=[prompt_generate_agent, prompt_format_agent],
     )
 
     return prompt_generator_agent

@@ -20,6 +20,7 @@ from .sub_agents.evaluator.agent import create_evaluator_agent
 from .sub_agents.prompt_preparator.agent import prompt_preparation_agent
 from .hook.selection_hook import hook_segment_selection
 from .hook.cost_calculator_hook import hook_cost_calculator
+from .tools.generate_video_prompts import generate_video_prompts
 
 
 def create_video_recreation_agent() -> Agent:
@@ -64,16 +65,16 @@ def create_video_recreation_agent() -> Agent:
         name="video_recreation_agent",
         description="基于分镜数据生成视频复刻提示词，调用视频生成模型，支持风格迁移和自动评估",
         instruction=RECREATION_ROOT_AGENT_INSTRUCTION,
+        tools=[generate_video_prompts],  # 直接持有工具：用于"仅查看提示词"的灵活调用
         sub_agents=[
             recreation_pipeline,  # 标准流程（完整复刻）
             quick_video_agent,  # 快捷流程（提示词 → 视频）
         ],
-        # 注意：Root Agent 不挂工具，工具由 sub_agent 持有（参考 multimedia 模式）
         before_agent_callback=hook_segment_selection,  # 处理分镜选择
         after_agent_callback=[hook_cost_calculator],  # 计算费用
         model_extra_config={
             "extra_body": {
-                "thinking": {"type": getenv("THINKING_RECREATION_AGENT", "enabled")}
+                "thinking": {"type": getenv("THINKING_RECREATION_AGENT", "disabled")}
             }
         },
     )

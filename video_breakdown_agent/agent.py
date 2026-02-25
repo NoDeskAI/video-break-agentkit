@@ -20,10 +20,7 @@ from .hook.search_output_hook import suppress_search_agent_user_output
 from .hook.video_upload_hook import hook_video_upload
 from .prompt import ROOT_AGENT_INSTRUCTION
 from .sub_agents.breakdown_agent.prompt import BREAKDOWN_AGENT_INSTRUCTION
-from .sub_agents.hook_analyzer_agent.prompt import (
-    HOOK_ANALYZER_INSTRUCTION,
-    HOOK_FORMAT_INSTRUCTION,
-)
+from .sub_agents.hook_analyzer_agent.prompt import HOOK_AGENT_INSTRUCTION
 from .sub_agents.report_generator_agent.prompt import REPORT_AGENT_INSTRUCTION
 from .sub_agents.report_generator_agent.direct_output_callback import (
     direct_output_callback,
@@ -39,13 +36,6 @@ from .tools.report_generator import generate_video_report
 # ==================== 视频复刻Agent导入（新增） ====================
 from .sub_agents.video_recreation_agent.agent import video_recreation_agent
 
-# ==================== Fork优化导入（新增） ====================
-from .sub_agents.hook_analyzer_agent.filtered_sequential import (
-    HookAnalyzerSequentialAgent,
-)
-from .sub_agents.hook_analyzer_agent.hook.clean_tool_args import (
-    clean_analyze_hook_arguments,
-)
 
 logger = logging.getLogger(__name__)
 
@@ -92,7 +82,12 @@ search_agent = Agent(
         "格式注意：输出中禁止使用波浪号 ~，数值范围请用 到 或 - 代替（如 1°C到9°C），"
         "避免 Markdown 渲染器将 ~ 误解析为删除线。\n"
         "\n"
-        "完成搜索后，必须立即调用 transfer_to_agent，将控制权归还给 video_breakdown_agent。"
+        "完成搜索后，必须立即调用 transfer_to_agent，将控制权归还给 video_breakdown_agent。\n"
+        "\n"
+        "重要限制：你只负责联网搜索。\n"
+        "禁止接受视频分析、分镜拆解、钩子分析等任务。\n"
+        "禁止调用 transfer_to_agent 转向任何 pipeline（如 hook_only_pipeline、breakdown_only_pipeline）。\n"
+        "只允许通过 transfer_to_agent('video_breakdown_agent') 返回给根 Agent。"
     ),
     tools=[web_search],
     after_model_callback=[suppress_search_agent_user_output],
@@ -126,18 +121,18 @@ def create_breakdown_agent() -> Agent:
     )
 
 
-def create_hook_analyzer_agent() -> SequentialAgent:
+def create_hook_analyzer_agent() -> Agent:
     """
-    创建Hook Analyzer Agent（Fork优化版）
+    创建 Hook Analyzer Agent（合并版）
 
-    优化点：
-    1. 使用 HookAnalyzerSequentialAgent 过滤中间步骤输出
-    2. 使用 _prime_hook_segments_state 预加载数据
-    3. 使用 clean_analyze_hook_arguments 清理工具参数
+    分析 + 格式化合并为单个 Agent，消除跨 Agent 数据传递问题：
+    - 视觉模型直接输出格式化 Markdown 报告
+    - before_agent_callback 预加载帧数据到 state
+    - after_model_callback 兜底修复并写入 state
     """
 
     def _prime_hook_segments_state(callback_context: CallbackContext):
-        """在LLM运行前预加载hook_segments_context，确保数据稳定性"""
+        """在 LLM 运行前预加载 hook_segments_context，确保数据稳定性"""
         inv = getattr(callback_context, "_invocation_context", None)
         if not inv:
             return None
@@ -150,49 +145,21 @@ def create_hook_analyzer_agent() -> SequentialAgent:
             state["hook_segments_context"] = context
         return None
 
-    hook_analysis_agent = Agent(
-        name="hook_analysis_agent",
+    return Agent(
+        name="hook_agent",
         model_name=os.getenv("MODEL_VISION_NAME", "doubao-seed-1-6-vision-250815"),
-        description="对视频前三秒分镜进行深度钩子分析，具备视觉分析能力，可直接观察关键帧图片进行专业评估",
-        instruction=HOOK_ANALYZER_INSTRUCTION,
-        tools=[],  # ⚠️ Fork优化：不直接挂载工具，通过callback预加载
-        before_agent_callback=_prime_hook_segments_state,  # ⚠️ Fork优化：预加载数据
-        after_model_callback=[clean_analyze_hook_arguments],  # ⚠️ Fork优化：清理参数
-        model_extra_config={
-            "extra_body": {
-                "thinking": {
-                    "type": os.getenv("THINKING_HOOK_ANALYZER_AGENT", "disabled")
-                },
-                "caching": {
-                    "type": "disabled"
-                },  # 禁用缓存，避免账户未激活 cache service
-            }
-        },
-    )
-
-    hook_format_agent = Agent(
-        name="hook_format_agent",
-        model_name=os.getenv(
-            "MODEL_FORMAT_NAME", os.getenv("MODEL_AGENT_NAME", "doubao-seed-1-6-251015")
-        ),
-        description="将钩子分析结果格式化为结构化输出并投影为用户可读 Markdown",
-        instruction=HOOK_FORMAT_INSTRUCTION,
-        # 不设置 json_response_config，让 LLM 自由按 Markdown 模板输出，避免 JSON 模式与 Prompt 冲突
+        description="对视频前三秒进行深度钩子分析，直接输出格式化 Markdown 报告",
+        instruction=HOOK_AGENT_INSTRUCTION,
+        tools=[],
         output_key="hook_analysis",
+        before_agent_callback=_prime_hook_segments_state,
         after_model_callback=[soft_fix_hook_output],
         model_extra_config={
             "extra_body": {
-                "thinking": {
-                    "type": os.getenv("THINKING_HOOK_FORMAT_AGENT", "disabled")
-                }
+                "thinking": {"type": os.getenv("THINKING_HOOK_AGENT", "disabled")},
+                "caching": {"type": "disabled"},  # 禁用缓存，避免账户未激活 cache service
             }
         },
-    )
-
-    return HookAnalyzerSequentialAgent(  # ⚠️ Fork优化：使用自定义类过滤中间步骤
-        name="hook_analyzer_agent",
-        description="前三秒钩子分析顺序流程：先分析，再格式化输出（Fork优化版）",
-        sub_agents=[hook_analysis_agent, hook_format_agent],
     )
 
 

@@ -671,6 +671,11 @@ async def video_generate(
             )
         logger.info("=" * 60)
 
+        # 清除已完成的 pending_prompts，防止意外重复调用
+        for p in prompts:
+            p["selected"] = False
+        tool_context.state["pending_prompts"] = pending_prompts
+
         return {
             "status": final_status,
             "success_list": success_list,

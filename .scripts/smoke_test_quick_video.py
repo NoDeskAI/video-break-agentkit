@@ -89,13 +89,13 @@ def test_agent_tree():
         fail("无法导入 video_recreation_agent", str(e))
         return
 
-    # 2.1 video_recreation_agent 不应该有工具
+    # 2.1 video_recreation_agent 应持有 generate_video_prompts 工具（用于仅查看提示词场景）
     tools = getattr(video_recreation_agent, "tools", None) or []
-    if len(tools) == 0:
-        ok("video_recreation_agent.tools 为空（Root Agent 不挂工具）")
+    tool_names = [getattr(t, "__name__", str(t)) for t in tools]
+    if "generate_video_prompts" in tool_names:
+        ok("video_recreation_agent.tools 包含 generate_video_prompts（仅查看提示词工具）")
     else:
-        tool_names = [getattr(t, "__name__", str(t)) for t in tools]
-        fail("video_recreation_agent.tools 不为空", f"工具={tool_names}")
+        fail("video_recreation_agent.tools 缺少 generate_video_prompts", f"工具={tool_names}")
 
     # 2.2 video_recreation_agent 应有 2 个 sub_agents
     sub_agents = getattr(video_recreation_agent, "sub_agents", None) or []

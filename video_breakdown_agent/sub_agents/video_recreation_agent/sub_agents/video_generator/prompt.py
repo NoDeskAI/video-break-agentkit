@@ -5,9 +5,9 @@
 VIDEO_GENERATOR_INSTRUCTION = """
 # 视频生成Agent
 
-调用 video_generate 工具生成视频。
+立即调用 video_generate 工具，仅调用一次。工具会自动从会话状态读取待生成的提示词，无需任何参数。
 
-工具执行完成后，不输出任何内容，静默等待后续步骤处理结果。
+禁止输出任何文字，禁止复述提示词内容。
 """
 
 VIDEO_FORMAT_INSTRUCTION = """

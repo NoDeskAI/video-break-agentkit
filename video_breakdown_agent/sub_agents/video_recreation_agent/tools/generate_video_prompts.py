@@ -561,17 +561,15 @@ async def generate_final_prompt(
 任务：基于原始脚本生成用于AI视频生成的专业提示词。
 
 核心原则（优先级从高到低）：
-1. **完全忠于原始脚本**：所有画面、动作、语音、场景等核心内容必须严格来自原始脚本
-2. **重点强化视觉细节**：充分利用光影、色调、景深、构图、运动等视觉分析信息，生成专业级提示词
-3. **知识库仅作参考**：提供的知识片段仅在与原始脚本相关时参考，不相关则完全忽略
-4. **自主补充细节**：基于原始脚本逻辑，自主补充专业的运镜路径、打光方式、音频描述
-5. **自然流畅整合**：生成的提示词应自然连贯，不生硬套用模板
+1. **画面内容是灵魂**：提示词必须以「画面内容」为核心展开，所有具体的人物、产品、动作、背景元素都必须体现在提示词中，不能省略或替换为笼统词汇
+2. **完全忠于原始脚本**：不编造、不偏离脚本，所有信息来自提供的数据
+3. **专业视觉补充**：在忠实描述画面内容的基础上，自然融入运镜、光影、色调等专业描述
+4. **知识库仅作参考**：知识片段仅在与脚本相关时参考表达风格，不相关则忽略
 
-重要：如果知识片段与原始脚本不匹配，直接忽略，完全基于脚本自主生成。
+重要：**画面内容字段的每一个具体描述都必须出现在生成的提示词中**。
 
 输出格式：
-- 单段落，150-300字
-- 结构：主体+场景+运动+运镜+光影+色调+景深+构图+音频+氛围
+- 单段落，以画面实际内容开头，再补充镜头语言和氛围
 - 使用顿号、逗号连接，句号结束
 """
 
@@ -591,56 +589,52 @@ async def generate_final_prompt(
     end_time = segment.get("end_time", segment.get("end", 3))
     duration = segment.get("duration", end_time - start_time)
 
+    # 仅在非默认值时输出视觉参数，避免默认值干扰 LLM
+    lighting_summary_parts = []
+    if lighting.get("光源类型") not in ("", "自然光", "未知", None):
+        lighting_summary_parts.append(lighting["光源类型"])
+    if lighting.get("光源方向") not in ("", "正面光", "未知", None):
+        lighting_summary_parts.append(lighting["光源方向"])
+    if lighting.get("明暗对比") not in ("", "中等", "未知", None):
+        lighting_summary_parts.append(lighting["明暗对比"])
+    lighting_summary = "、".join(lighting_summary_parts) if lighting_summary_parts else "（无特殊光影）"
+
+    color_summary_parts = []
+    if color.get("主色调") not in ("", "自然", "中性", "未知", None):
+        color_summary_parts.append(color["主色调"])
+    if color.get("色彩氛围") not in ("", "中性", "未知", None):
+        color_summary_parts.append(color["色彩氛围"])
+    if color.get("滤镜效果") not in ("", "无", "未知", None):
+        color_summary_parts.append(f"滤镜:{color['滤镜效果']}")
+    color_summary = "、".join(color_summary_parts) if color_summary_parts else "（自然色调）"
+
+    depth_summary_parts = []
+    if depth.get("虚化程度") not in ("", "中等虚化", "未知", None):
+        depth_summary_parts.append(depth["虚化程度"])
+    if depth.get("焦点主体") not in ("", "主体", "未知", None):
+        depth_summary_parts.append(f"焦点:{depth['焦点主体']}")
+    depth_summary = "、".join(depth_summary_parts) if depth_summary_parts else "（标准景深）"
+
     user_message = f"""
-## 原始脚本（必须100%遵守）
+## 原始脚本（画面内容必须完整体现，不得省略）
 
-时间：{start_time:.1f}s - {end_time:.1f}s（{duration:.1f}s）
+**【画面内容 - 最高优先级】**：{visual_content}
 
-**画面内容**：{visual_content}
 **镜头**：{shot_type}，{camera_movement}
-**场景**：{segment.get("scene", "室内")}
+**场景**：{segment.get("scene", "室内")}，时长 {duration:.1f}s
+**音频**：语音={segment.get("speech_text") or "无"}；BGM={format_bgm_info(bgm_info) if bgm_info else "无"}
+**视觉参数（仅非默认值）**：光影={lighting_summary}，色调={color_summary}，景深={depth_summary}
 
-**光影**：
-- 光源：{lighting.get("光源类型", "自然光")}，{lighting.get("光源方向", "正面光")}
-- 明暗：{lighting.get("明暗对比", "中等")}
-- 阴影：{lighting.get("阴影风格", "柔和阴影")}
+## 参考知识片段（可选）
 
-**色调**：
-- 主色调：{color.get("主色调", "中性")}
-- 饱和度：{color.get("饱和度", "中等")}
-- 氛围：{color.get("色彩氛围", "中性")}
-- 滤镜：{color.get("滤镜效果", "无")}
-
-**景深**：
-- 虚化：{depth.get("虚化程度", "中等虚化")}
-- 焦点：{depth.get("焦点主体", "主体")}
-- 范围：{depth.get("景深范围", "中景深")}
-
-**构图**：
-- 主体位置：{composition.get("主体位置", "画面中心")}
-- 构图法则：{composition.get("构图法则", "中心构图")}
-- 画面平衡：{composition.get("画面平衡", "对称")}
-
-**运动**：
-- 速度：{motion.get("速度", "中速")}
-- 节奏：{motion.get("节奏感", "流畅")}
-- 特效：{motion.get("特殊效果", "无")}
-
-**音频**：
-- 语音：{segment.get("speech_text") or "无"}
-- BGM：{format_bgm_info(bgm_info) if bgm_info else "无"}
-
-## 参考知识片段（可选，仅在相关时参考）
-
-{chr(10).join(knowledge_pieces) if knowledge_pieces else "（无相关知识片段，请完全基于原始脚本自主生成）"}
+{chr(10).join(knowledge_pieces) if knowledge_pieces else "（无，请完全基于原始脚本自主生成）"}
 
 ## 生成要求
 
-1. 完全基于原始脚本内容，不偏离脚本描述
-2. 将光影、色调、景深、构图、运动细节自然融入提示词
-3. 生成的提示词应能让AI模型准确复现原视频的视觉风格
-4. 如果知识片段与脚本内容相关，可以参考其专业表达风格
-5. 如果知识片段与脚本不匹配，完全忽略，自主补充专业细节
+1. 提示词必须以「画面内容」中描述的具体对象和动作开头，确保AI模型能准确重现画面主体
+2. 画面内容中的每个具体元素（人物、产品、背景道具、文字等）都必须出现在提示词中
+3. 在描述完画面内容后，自然加入镜头语言（{shot_type}，{camera_movement}）和光影/色调补充
+4. 音频信息（语音/BGM）放在提示词末尾
 
 生成提示词：
 """
@@ -744,10 +738,11 @@ def build_cinematic_prompt(
     Returns:
         电影级提示词字符串
     """
-    # 提取分镜数据
-    visual_content = segment.get("visual_content", "")
-    shot_type = segment.get("shot_type", "中景")
-    camera_movement = segment.get("camera_movement", "固定")
+    # 提取分镜数据，兼容新版（视觉表现.画面内容）和旧版（顶层 visual_content）两种格式
+    visual_info = segment.get("视觉表现", {})
+    visual_content = segment.get("visual_content", "") or visual_info.get("画面内容", "")
+    shot_type = segment.get("shot_type", "") or visual_info.get("景别", "中景") or "中景"
+    camera_movement = segment.get("camera_movement", "") or visual_info.get("运镜", "固定") or "固定"
     scene = segment.get("scene", "室内场景")
     duration = segment.get("duration", 3.0)
 
@@ -823,6 +818,7 @@ def build_cinematic_prompt(
 
 async def generate_video_prompts(
     tool_context: ToolContext,
+    segment_indexes: str = "",  # 逗号分隔的分镜序号，如 "1" 或 "1,3"；空字符串=全部
     use_skill_mode: bool = True,  # 默认启用Skill模式
     user_product_type: Optional[str] = None,
     force_template: Optional[str] = None,
@@ -838,6 +834,7 @@ async def generate_video_prompts(
 
     Args:
         tool_context: 工具上下文（包含session state）
+        segment_indexes: 逗号分隔的分镜序号（如 "1" 或 "1,3"），空字符串表示生成全部分镜
         use_skill_mode: 是否启用Skill模式（默认True）
         user_product_type: 用户指定的产品类型（可选）
         force_template: 强制使用指定模板（可选）
@@ -846,9 +843,8 @@ async def generate_video_prompts(
     Returns:
         {
             "status": "success" | "error",
-            "prompts": List[Dict],  # 提示词列表
-            "generation_stats": Dict,  # 生成方式统计
-            "total_count": int,  # 总分镜数
+            "prompts": List[Dict],  # 提示词列表（仅含展示字段，调试字段存入 state）
+            "total_count": int,  # 本次生成的分镜数
             "message": str  # 状态消息
         }
     """
@@ -865,7 +861,14 @@ async def generate_video_prompts(
                 "total_count": 0,
             }
 
-        segments = vision_result.get("segments", [])
+        # vision_analysis_result 由 analyze_segments_vision 以 list 形式存储；
+        # 兼容旧格式（dict 包裹 segments 字段）
+        if isinstance(vision_result, list):
+            segments = vision_result
+        elif isinstance(vision_result, dict):
+            segments = vision_result.get("segments", [])
+        else:
+            segments = []
 
         if not segments:
             return {
@@ -875,13 +878,26 @@ async def generate_video_prompts(
                 "total_count": 0,
             }
 
+        # 解析 segment_indexes 过滤：空字符串=全部，否则只处理指定序号（从1开始）
+        filter_indexes: Optional[set] = None
+        if segment_indexes and segment_indexes.strip():
+            try:
+                filter_indexes = {int(x.strip()) for x in segment_indexes.split(",") if x.strip()}
+            except ValueError:
+                logger.warning(f"segment_indexes 格式无效，忽略过滤: {segment_indexes!r}")
+
         logger.info(
             f"开始生成提示词，共{len(segments)}个分镜，模式: {'Skill' if use_skill_mode else '函数'}"
+            + (f"，仅生成分镜: {filter_indexes}" if filter_indexes else "，生成全部")
         )
 
         prompts = []
+        prompts_debug = []  # 内部调试数据，不回传给 LLM
 
         for idx, segment in enumerate(segments, start=1):
+            # 跳过未被指定的分镜
+            if filter_indexes and idx not in filter_indexes:
+                continue
             # 向后兼容：为旧版数据（缺少增强视觉维度）补充默认值
             visual = segment.get("视觉表现", {})
             if "光影" not in visual:
@@ -975,7 +991,7 @@ async def generate_video_prompts(
             duration = segment.get("duration", 3.0)
             estimated_cost = round(duration * 1.5, 2)  # 假设每秒1.5元
 
-            # 构建结果
+            # 构建对外返回的精简结构（LLM 可见，禁止含调试大字段）
             prompt_data = {
                 "segment_index": idx,
                 "segment_name": f"segment_{idx}",
@@ -987,15 +1003,19 @@ async def generate_video_prompts(
                 "first_frame": first_frame,
                 "resolution": "720p",
                 "ratio": "9:16",
-                "selected": (idx == 1),  # 默认只选中第1个分镜（前3秒黄金钩子）
+                "selected": (idx == 1) if not filter_indexes else (idx in filter_indexes),
                 "estimated_cost": estimated_cost,
                 "generation_method": generation_method,
-                "extracted_features": features,  # 保留特征用于调试
-                "knowledge_used": len(knowledge_pieces),  # 使用的知识片段数
-                "original_segment_data": segment,
             }
 
+            # 调试字段仅写入 state 的内部 key，不回传给 LLM
+            prompt_data_debug = dict(prompt_data)
+            prompt_data_debug["extracted_features"] = features
+            prompt_data_debug["knowledge_used"] = len(knowledge_pieces)
+            prompt_data_debug["original_segment_data"] = segment
+
             prompts.append(prompt_data)
+            prompts_debug.append(prompt_data_debug)
 
         # 统计生成方式
         method_counts = {}
@@ -1006,26 +1026,31 @@ async def generate_video_prompts(
         # 计算总费用（仅选中的）
         total_cost = sum(p["estimated_cost"] for p in prompts if p["selected"])
 
-        # 存入session state
+        # 存入 session state：
+        # - pending_prompts：精简结构（供 review_prompts / video_generate 使用）
+        # - pending_prompts_debug：含调试字段，仅内部工具（如 evaluator）使用
         tool_context.state["pending_prompts"] = {
             "prompts": prompts,
             "total_count": len(prompts),
-            "total_selected": 1,  # 默认选中1个
+            "total_selected": sum(1 for p in prompts if p["selected"]),
             "total_duration": sum(p["duration"] for p in prompts if p["selected"]),
             "total_cost": total_cost,
             "generation_stats": method_counts,
         }
+        tool_context.state["pending_prompts_debug"] = {
+            "prompts": prompts_debug,
+        }
 
         logger.info(f"✅ 提示词生成完成，统计: {method_counts}")
 
+        selected_indexes = [p["segment_index"] for p in prompts if p["selected"]]
         return {
             "status": "success",
             "prompts": prompts,
             "total_count": len(prompts),
-            "total_selected": 1,
+            "total_selected": len(selected_indexes),
             "total_cost": total_cost,
-            "generation_stats": method_counts,
-            "message": f"成功生成{len(prompts)}个分镜的提示词，默认选中分镜1（前3秒）",
+            "message": f"成功生成{len(prompts)}个分镜的提示词",
         }
 
     except Exception as e:

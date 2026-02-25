@@ -38,12 +38,14 @@ def suppress_search_agent_user_output(
     if not llm_response or not llm_response.content or not llm_response.content.parts:
         return llm_response
 
-    # 检查 parts[0] 是否包含 function_call 或 function_response，完整放行不做修改
-    part = llm_response.content.parts[0]
-    if hasattr(part, "function_call") and part.function_call:
-        return llm_response
-    if hasattr(part, "function_response") and part.function_response:
-        return llm_response
+    # 必须检查所有 parts：当 parts[0]=文本、parts[1]=function_call 时，
+    # 若只检查 parts[0] 会错误地改写文本，同时放行 function_call，
+    # 导致 ADK 无法匹配 function_response（"No function call event found" 错误）。
+    for part in llm_response.content.parts:
+        if hasattr(part, "function_call") and part.function_call:
+            return llm_response
+        if hasattr(part, "function_response") and part.function_response:
+            return llm_response
 
     text = part.text or ""
     if not text or _is_tool_call_turn(model_response_event, text):

@@ -1,17 +1,19 @@
-# 智能短视频拆解分析助手
+# 智能短视频拆解分析与复刻助手
 
 ## 概述
 
-这是一个基于火山引擎 VeADK & AgentKit 构建的智能短视频分析系统。本系统采用 Multi-Agent 架构，集成 FFmpeg 视频处理、火山 ASR 语音识别、LiteLLM 多模态视觉分析和 TOS 对象存储，能够对短视频进行全方位的专业分析。
+这是一个基于火山引擎 VeADK & AgentKit 构建的智能短视频分析与复刻系统。本系统采用 Multi-Agent 架构，集成 FFmpeg 视频处理、火山 ASR 语音识别、LiteLLM 多模态视觉分析、TOS 对象存储和 Doubao-Seedance 视频生成，能够对短视频进行全方位的专业分析，并支持一键复刻爆款视频。
 
 ## 核心功能
 
 本项目提供以下核心功能：
 
-- **视频分镜拆解**：基于 FFmpeg 自动识别视频分镜，提取关键帧并进行画面内容分析，输出结构化分镜数据
+- **视频分镜拆解**：基于 FFmpeg 自动识别视频分镜，提取关键帧并进行画面内容分析（含光影、色调、景深、构图、运动 5 个维度），输出结构化分镜数据
 - **前三秒钩子分析**：从视觉冲击力、语言钩子、情绪唤起、信息密度、节奏掌控 5 个维度进行专业评分
 - **专业报告生成**：整合分镜数据和钩子分析结果，生成 Markdown 格式的完整分析报告
 - **联网搜索**：实时获取短视频行业最新资讯、平台规则和热门趋势
+- **视频提示词生成**：LLM 主导三阶段工作流（特征提取 → 知识检索 → 组装生成），将分镜脚本转换为专业视频生成提示词
+- **视频复刻生成**：调用 Doubao-Seedance 模型，支持首尾帧、参考图、音频生成，按分镜独立生成并合并，一键复刻爆款视频
 
 ## 🎯 核心解决场景
 
@@ -21,6 +23,7 @@
 - **😵 卖点传递不清**：通过 **分镜拆解** 梳理叙事逻辑，确保产品核心卖点在关键时间窗内有效传递。
 - **🐢 竞品分析效率低**：自动化提取竞品分镜结构与拍摄手法，快速复刻爆款视频公式。
 - **📝 脚本创作没灵感**：基于优秀视频反推分镜脚本，为新视频创作提供结构化参考。
+- **🎬 复刻成本高**：自动将分镜脚本转为专业视频生成提示词，调用 **Doubao-Seedance** 一键复刻，支持风格迁移。
 
 ## 使用案例
 
@@ -117,7 +120,35 @@ etc.
 
 etc.
 
-### 4. 生成视频洞察报告
+---
+
+### 4. 视频复刻生成
+
+**用户：** 根据分镜1的脚本生成视频提示词，然后复刻这个分镜
+
+**小视（Root Agent）：**
+
+#### 🎬 分镜1 视频生成提示词
+
+基于分镜拆解结果，LLM 三阶段工作流生成专业提示词：
+
+**正向提示词：**
+> 近景固定镜头，带闪粉美甲的手单手持白色保温杯展示外观，随后双手操作杯盖环，柔和室内自然光，背景卡通日历装饰，暖白色调，中心构图，产品纹理清晰锐利，舒缓轻音乐氛围。
+
+**生成信息：**
+- 时间段：0.0-3.0 秒 | 时长：3秒（自动对齐至 5 秒）
+- 模型：doubao-seedance-1-5-pro-251215（图生视频）
+- 预估费用：¥0.70
+
+**小视（Root Agent）：** ✅ 视频生成完成！
+
+📽️ 分镜1 视频链接：`https://ark-content-generation-cn-beijing.volces.com/...`
+
+如需拼接多个分镜或调整提示词，请继续告诉我。
+
+---
+
+### 5. 生成视频洞察报告
 
 **用户：** 给出详细的视频洞察报告
 
@@ -156,14 +187,18 @@ Root Agent（小视 - 主编排器）
     ├── Breakdown Agent（分镜拆解）
     │   ├── FFmpeg 视频预处理
     │   ├── 火山 ASR 语音识别
-    │   ├── LiteLLM 视觉分析
+    │   ├── LiteLLM 视觉分析（含光影/色调/景深/构图/运动）
     │   └── BGM 分析
     ├── Hook Analyzer Agent（钩子分析）
     │   ├── 前三秒分镜提取
     │   ├── 多模态视觉评分
     │   └── JSON 格式化
     ├── Report Generator Agent（报告生成）
-    └── Search Agent（联网搜索）
+    ├── Search Agent（联网搜索）
+    └── Video Recreation Agent（视频复刻）
+        ├── Prompt Generator（提示词生成，三阶段 LLM 工作流）
+        ├── Video Generator（调用 Doubao-Seedance 生成视频）
+        └── Video Merge（分镜视频合并）
 ```
 
 主要的火山引擎产品或 Agent 组件：
@@ -171,6 +206,8 @@ Root Agent（小视 - 主编排器）
 - 方舟大模型：
   - doubao-seed-1-6-251015（主推理模型）
   - doubao-seed-1-6-vision-250815（视觉分析模型）
+  - doubao-seedance-1-5-pro-251215（视频生成，图生视频）
+  - doubao-seedance-1-0-pro-250528（视频生成，文生视频）
 - TOS 对象存储
 - 火山 ASR 语音识别（可选）
 - Web Search 联网搜索
@@ -322,6 +359,10 @@ export MODEL_VISION_NAME=doubao-seed-1-6-vision-250815
 # 或切换为 Google Gemini（需配置 GEMINI_API_KEY）
 # export MODEL_VISION_NAME=gemini/gemini-2.5-pro
 # export GEMINI_API_KEY=<Your Gemini API Key>
+
+# 视频复刻功能（可选，使用视频生成能力时需配置）
+export MODEL_VIDEO_API_KEY=<Your Ark API Key>  # 可与 MODEL_AGENT_API_KEY 相同
+export MODEL_VIDEO_NAME=doubao-seedance-1-5-pro-251215  # 默认值，可省略
 ```
 
 > 详细配置说明请参考 [README_CONFIG.md](README_CONFIG.md)
@@ -349,6 +390,7 @@ Web 界面提供图形化对话测试环境，支持实时查看消息流和调�
 分析这个视频前三秒的钩子吸引力，给出专业评分
 生成完整的视频分析报告
 搜一下抖音最新推荐算法有什么变化
+根据分镜1的脚本生成视频提示词，然后复刻这个分镜
 ```
 
 ### 效果展示
@@ -370,13 +412,13 @@ Web 界面提供图形化对话测试环境，支持实时查看消息流和调�
 使用 `pip` 安装 AgentKit 命令行工具：
 
 ```bash
-pip install agentkit-sdk-python==0.3.2
+pip install agentkit-sdk-python==0.5.1
 ```
 
 或者使用 `uv` 安装 AgentKit 命令行工具：
 
 ```bash
-uv pip install agentkit-sdk-python==0.3.2
+uv pip install agentkit-sdk-python==0.5.1
 ```
 
 ### 设置环境变量
@@ -432,20 +474,24 @@ agentkit invoke "分析这个视频 https://example.com/video.mp4"
 - **数据预加载机制**：通过 `_prime_hook_segments_state` 在LLM运行前预加载数据，提升稳定性
 - **工具参数清理**：通过 `clean_analyze_hook_arguments` 自动清理工具调用参数，避免格式错误
 
-### 视频复刻能力（Main版本新增）
+### 视频复刻能力
 
-- **LLM主导提示词生成**：Skill方案三阶段工作流（特征提取 → 知识检索 → 组装生成）
-- **Doubao-Seedance集成**：支持首尾帧、参考图、音频生成
-- **增强脚本分析**：光影、色调、景深、构图、运动5个新维度
+- **LLM主导提示词生成**：Skill 方案三阶段工作流（特征提取 → 知识检索 → 组装生成），基于原片脚本严格还原拍摄意图
+- **Doubao-Seedance 集成**：支持首尾帧（I2V）、纯文本（T2V）、参考图、音频生成，自动选择最优模型
+- **时长自动对齐**：分镜时长自动 snap 至 5/10 秒（API 要求），无需手动调整
+- **增强脚本分析**：光影特征、色调风格、景深控制、构图方式、运动特征 5 个新维度，为提示词提供更丰富上下文
+- **分镜独立生成**：每个分镜单独生成视频，支持选择性生成和成本估算，多分镜自动合并
+- **风格迁移支持**：可在保留原片脚本结构的基础上，替换主题/产品进行风格迁移
 
 ### Multi-Agent 协作架构
 
-Root Agent 作为主编排器，根据用户意图自动调度 4 个专业子 Agent：
+Root Agent 作为主编排器，根据用户意图自动调度 5 个专业子 Agent：
 
-- **Breakdown Agent**：视频预处理 + ASR + 视觉分析 + BGM 分析
+- **Breakdown Agent**：视频预处理 + ASR + 视觉分析（含5维度）+ BGM 分析
 - **Hook Analyzer Agent**：SequentialAgent 模式，先视觉分析后格式化
 - **Report Generator Agent**：整合数据生成 Markdown 报告
 - **Search Agent**：联网搜索行业信息
+- **Video Recreation Agent**：提示词生成 + Doubao-Seedance 视频生成 + 分镜合并
 
 ### 优雅降级机制
 

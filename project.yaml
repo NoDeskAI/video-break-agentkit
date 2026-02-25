@@ -1,16 +1,18 @@
-name: "智能短视频拆解分析助手"
-name_en: "Video Breakdown Analyzer"
-description: "专业的短视频分镜拆解和深度分析工具，自动生成分镜脚本、前三秒钩子评分和完整分析报告"
+name: "智能短视频拆解分析与复刻助手"
+name_en: "Video Breakdown & Recreation Agent"
+description: "专业的短视频分镜拆解、深度分析与视频复刻工具，自动生成分镜脚本、前三秒钩子评分、完整分析报告，并支持将爆款视频脚本转换为视频生成提示词、调用 Doubao-Seedance 一键复刻"
 details: |
-  这是一个基于火山引擎 AgentKit 构建的智能短视频分析系统。系统采用 Multi-Agent 架构，
+  这是一个基于火山引擎 AgentKit 构建的智能短视频分析与复刻系统。系统采用 Multi-Agent 架构，
   集成 FFmpeg 视频处理、火山 ASR 语音识别、LiteLLM 多模态视觉分析和 TOS 对象存储，
-  能够对短视频进行全方位的专业分析。
+  能够对短视频进行全方位的专业分析，并支持一键复刻爆款视频。
 
   核心能力：
-  - 视频分镜拆解：自动识别视频分镜，提取关键帧并分析画面内容
+  - 视频分镜拆解：自动识别视频分镜，提取关键帧并分析画面内容（含光影、色调、景深、构图、运动5个维度）
   - 前三秒钩子分析：从视觉冲击力、语言钩子、情绪唤起等5个维度评分
   - 专业报告生成：整合所有分析数据生成 Markdown 格式专业报告
   - 联网搜索：实时获取短视频行业最新资讯和平台规则
+  - 视频提示词生成：LLM 主导三阶段工作流，将分镜脚本转换为专业视频生成提示词
+  - 视频复刻生成：调用 Doubao-Seedance 模型，支持首尾帧、参考图、音频生成，一键复刻爆款视频
 tags:
   industry: "通用"
   from: "杭州没有桌子人工智能有限公司"
@@ -22,6 +24,8 @@ tags:
     - "ASR"
     - "视觉分析"
     - "TOS存储"
+    - "视频生成"
+    - "Doubao-Seedance"
 type: "application"
 
 scenarios:
@@ -33,6 +37,8 @@ scenarios:
     desc: "批量分析竞品视频的分镜手法、钩子策略和叙事节奏，提取创作灵感。"
   - name: "广告创意评估"
     desc: "针对短视频广告素材，评估前三秒钩子效果，预测投放转化潜力。"
+  - name: "爆款视频复刻"
+    desc: "将爆款视频脚本自动转换为专业视频生成提示词，调用 Doubao-Seedance 按分镜复刻，支持风格迁移。"
 
 prompts:
   - text: "帮我拆解这个视频的分镜结构"
@@ -40,6 +46,8 @@ prompts:
   - text: "分析这个视频前三秒的钩子吸引力，给出专业评分"
     resource_url: ""
   - text: "生成完整的视频分析报告"
+    resource_url: ""
+  - text: "根据分镜1的脚本生成视频提示词，然后复刻这个分镜"
     resource_url: ""
 
 components:
@@ -49,8 +57,11 @@ components:
     product: "TOS"
 
 envs:
-  - name: "火山方舟模型 API Key"
+  - name: "火山方舟模型 API Key（文本/视觉模型）"
     key: "MODEL_AGENT_API_KEY"
+    url: "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey"
+  - name: "火山方舟模型 API Key（视频生成，可与上方相同）"
+    key: "MODEL_VIDEO_API_KEY"
     url: "https://console.volcengine.com/ark/region:ark+cn-beijing/apiKey"
   - name: "火山引擎访问密钥"
     key: "VOLCENGINE_ACCESS_KEY"
@@ -61,7 +72,12 @@ envs:
   - name: "TOS 存储桶名称"
     key: "DATABASE_TOS_BUCKET"
     url: "https://console.volcengine.com/tos/bucket"
+  - name: "视频生成模型名称（可选，默认 doubao-seedance-1-5-pro-251215）"
+    key: "MODEL_VIDEO_NAME"
+    url: "https://console.volcengine.com/ark/region:ark+cn-beijing/model/detail"
 
 models:
   - "doubao-seed-1-6-251015"
   - "doubao-seed-1-6-vision-250815"
+  - "doubao-seedance-1-5-pro-251215"
+  - "doubao-seedance-1-0-pro-250528"

@@ -20,7 +20,7 @@ from veadk.utils.logger import get_logger
 
 logger = get_logger(__name__)
 
-_TARGET_AGENTS = {"hook_format_agent"}
+_TARGET_AGENTS = {"hook_agent"}
 _MAX_COMMENT_LEN = 800
 
 _SCORE_FIELDS = (
@@ -110,6 +110,25 @@ def _looks_like_tool_envelope(payload: Any) -> bool:
     if payload.get("agent_name") or payload.get("transfer_to_agent"):
         return True
     return False
+
+
+def _has_hook_fields(parsed: dict) -> bool:
+    """判断解析结果是否含有有意义的钩子分析字段。
+    防止 json_repair 将 Markdown 文本错误解析为空 {}，进而导致全 0.0 默认值。
+    """
+    hook_fields = {
+        "overall_score",
+        "visual_impact",
+        "language_hook",
+        "emotion_trigger",
+        "information_density",
+        "rhythm_control",
+        "visual_comment",
+        "language_comment",
+        "emotion_comment",
+        "hook_type",
+    }
+    return bool(hook_fields & set(parsed.keys()))
 
 
 def _is_tool_call_turn(model_response_event: Optional[Event], text: str) -> bool:
@@ -351,12 +370,14 @@ def soft_fix_hook_output(
     if not llm_response or not llm_response.content or not llm_response.content.parts:
         return llm_response
 
-    # 放行 function_call / function_response，避免干扰 SDK 事件追踪
-    part = llm_response.content.parts[0]
-    if hasattr(part, "function_call") and part.function_call:
-        return llm_response
-    if hasattr(part, "function_response") and part.function_response:
-        return llm_response
+    # 放行 function_call / function_response，避免干扰 SDK 事件追踪。
+    # 必须检查所有 parts：当 parts[0]=文本、parts[1]=function_call 时，
+    # 若只检查 parts[0] 会错误地改写文本，同时放行 function_call，导致死循环。
+    for part in llm_response.content.parts:
+        if hasattr(part, "function_call") and part.function_call:
+            return llm_response
+        if hasattr(part, "function_response") and part.function_response:
+            return llm_response
 
     text = _get_first_text(llm_response)
     if not text:
@@ -396,7 +417,13 @@ def soft_fix_hook_output(
     if isinstance(parsed, list):
         parsed = parsed[0] if parsed else {}
 
-    if isinstance(parsed, dict) and not _looks_like_tool_envelope(parsed):
+    # 仅当解析结果是含钩子字段的有效 dict 时才使用 JSON 路径；
+    # json_repair 对纯 Markdown 文本会返回 {}，若不加校验会导致全 0.0 默认值。
+    if (
+        isinstance(parsed, dict)
+        and not _looks_like_tool_envelope(parsed)
+        and _has_hook_fields(parsed)
+    ):
         normalized = _normalize_output(parsed)
         logger.info(
             "[soft_fix_hook_output] normalized by json path agent=%s", agent_name
@@ -404,7 +431,10 @@ def soft_fix_hook_output(
     else:
         normalized = _fallback_struct_from_text(text)
         logger.warning(
-            "[soft_fix_hook_output] fallback to text extraction agent=%s", agent_name
+            "[soft_fix_hook_output] fallback to text extraction agent=%s "
+            "(parsed_keys=%s)",
+            agent_name,
+            list(parsed.keys()) if isinstance(parsed, dict) else type(parsed).__name__,
         )
 
     markdown_summary = _build_hook_markdown_summary(normalized)

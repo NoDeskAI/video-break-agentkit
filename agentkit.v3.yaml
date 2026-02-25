@@ -1,0 +1,38 @@
+common:
+  agent_name: video_breakdown_agent_v3
+  entry_point: agent.py
+  description: v3.0 - 含视频复刻、视频提示词生成、视频生成功能
+  language: Python
+  language_version: '3.12'
+  agent_type: Basic App
+  dependencies_file: requirements.txt
+  runtime_envs:
+    DATABASE_TOS_BUCKET: video-breakdown-uploads
+    DATABASE_TOS_REGION: cn-beijing
+    FFMPEG_BIN: ffmpeg
+    FFPROBE_BIN: ffprobe
+  launch_type: cloud
+launch_types:
+  cloud:
+    region: cn-beijing
+    tos_bucket: agentkit-platform-2101232500
+    tos_prefix: agentkit-builds
+    image_tag: '{{timestamp}}'
+    cr_instance_name: nodesk-center
+    cr_namespace_name: agentkit
+    cr_image_full_url: nodesk-center-cn-beijing.cr.volces.com/agentkit/video_breakdown_agent_v3-rwbq:20260225022010
+    build_timeout: 3600
+    cp_workspace_name: agentkit-cli-workspace
+    cp_pipeline_name: video_breakdown_agent_v3-g1qk4ldx
+    cp_pipeline_id: a4747fc64a964e5fb186e6c88e9d3c3d
+    runtime_id: r-yeggmf93b4o2eybtkd8h
+    runtime_name: video_breakdown_agent_v3-g1qk4ldx
+    runtime_role_name: AgentKit_Runtime_Default_ServiceRole_z8pvs3w
+    runtime_auth_type: key_auth
+    runtime_apikey_name: API-KEY-t9swxfrt
+    runtime_apikey: kWyCnPe8OdkqB136QkpepwQiqTdPfJ9FHo9u
+    runtime_jwt_allowed_clients: []
+    runtime_endpoint: https://sd6ekukrtvotb9m1iutm0.apigateway-cn-beijing.volceapi.com
+    tos_region: cn-beijing
+docker_build:
+  platform: auto
