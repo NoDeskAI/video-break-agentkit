@@ -1,8 +1,8 @@
 """
 主编排 Root Agent 定义（veadk web 的唯一真相来源）
 
-VeADK 约束：有 sub_agents 的 Agent 不支持直接挂载 tools，
-因此 web_search 等工具封装为独立子 Agent。
+架构说明：root agent 直接持有 web_search 工具，无需独立的 search_agent 子 Agent。
+VeADK 支持 Agent 同时持有 tools 和 sub_agents（video_recreation_agent 已验证）。
 """
 
 import logging
@@ -12,25 +12,22 @@ from veadk import Agent
 from veadk.agents.sequential_agent import SequentialAgent
 from veadk.memory.short_term_memory import ShortTermMemory
 from veadk.tools.builtin_tools.web_search import web_search
-from google.adk.agents.callback_context import CallbackContext
-from google.adk.tools import ToolContext
 
 from .hook.final_output_hook import guard_final_user_output
-from .hook.search_output_hook import suppress_search_agent_user_output
 from .hook.video_upload_hook import hook_video_upload
 from .prompt import ROOT_AGENT_INSTRUCTION
-from .sub_agents.breakdown_agent.prompt import BREAKDOWN_AGENT_INSTRUCTION
-from .sub_agents.hook_analyzer_agent.prompt import HOOK_AGENT_INSTRUCTION
+from .sub_agents.breakdown_agent.prompt import (
+    BREAKDOWN_AGENT_INSTRUCTION,
+    HOOK_ANALYSIS_ADDENDUM,
+)
 from .sub_agents.report_generator_agent.prompt import REPORT_AGENT_INSTRUCTION
 from .sub_agents.report_generator_agent.direct_output_callback import (
     direct_output_callback,
 )
-from .hook.format_hook import soft_fix_hook_output
 from .tools.process_video import process_video
 from .tools.analyze_segments_vision import analyze_segments_vision
 from .tools.analyze_bgm import analyze_bgm
 from .tools.video_upload import video_upload_to_tos
-from .tools.analyze_hook_segments import analyze_hook_segments
 from .tools.report_generator import generate_video_report
 
 # ==================== 视频复刻Agent导入（新增） ====================
@@ -69,35 +66,20 @@ root_callback_kwargs = {
 if root_before_model_callback:
     root_callback_kwargs["before_model_callback"] = root_before_model_callback
 
-# ==================== 子 Agent 定义 ====================
-
-# 搜索子 Agent：挂载 web_search 工具
-search_agent = Agent(
-    name="search_agent",
-    description="联网搜索短视频行业资讯、平台规则、热门趋势等实时信息",
-    instruction=(
-        "你是一个搜索助手。收到用户的搜索请求后，使用 web_search 工具搜索相关信息。\n"
-        "你负责检索与整理，不直接面向用户输出最终答复；最终答复由 video_breakdown_agent 统一给出。\n"
-        "请将检索结果整理为简洁中文摘要（供 root 复用），不要添加自己的推测，只基于搜索结果回答。\n"
-        "格式注意：输出中禁止使用波浪号 ~，数值范围请用 到 或 - 代替（如 1°C到9°C），"
-        "避免 Markdown 渲染器将 ~ 误解析为删除线。\n"
-        "\n"
-        "完成搜索后，必须立即调用 transfer_to_agent，将控制权归还给 video_breakdown_agent。\n"
-        "\n"
-        "重要限制：你只负责联网搜索。\n"
-        "禁止接受视频分析、分镜拆解、钩子分析等任务。\n"
-        "禁止调用 transfer_to_agent 转向任何 pipeline（如 hook_only_pipeline、breakdown_only_pipeline）。\n"
-        "只允许通过 transfer_to_agent('video_breakdown_agent') 返回给根 Agent。"
-    ),
-    tools=[web_search],
-    after_model_callback=[suppress_search_agent_user_output],
-    output_key="search_result",
-)
-
 # ==================== Factory functions (避免 SequentialAgent 共享 parent) ====================
 
 
-def create_breakdown_agent() -> Agent:
+def create_breakdown_agent(include_hook_analysis: bool = False) -> Agent:
+    """
+    创建分镜拆解 Agent。
+
+    Args:
+        include_hook_analysis: 为 True 时在 instruction 末尾附加钩子分析模板，
+                               用于 hook_only_pipeline 和 full_analysis_pipeline。
+    """
+    instruction = BREAKDOWN_AGENT_INSTRUCTION
+    if include_hook_analysis:
+        instruction += HOOK_ANALYSIS_ADDENDUM
     return Agent(
         name="breakdown_agent",
         description=(
@@ -105,7 +87,7 @@ def create_breakdown_agent() -> Agent:
             "视觉分析（doubao-vision）、BGM 分析。"
             "支持URL链接和本地文件上传，输出完整分镜结构化数据。"
         ),
-        instruction=BREAKDOWN_AGENT_INSTRUCTION,
+        instruction=instruction,
         tools=[
             process_video,
             analyze_segments_vision,
@@ -116,48 +98,6 @@ def create_breakdown_agent() -> Agent:
         model_extra_config={
             "extra_body": {
                 "thinking": {"type": os.getenv("THINKING_BREAKDOWN_AGENT", "disabled")}
-            }
-        },
-    )
-
-
-def create_hook_analyzer_agent() -> Agent:
-    """
-    创建 Hook Analyzer Agent（合并版）
-
-    分析 + 格式化合并为单个 Agent，消除跨 Agent 数据传递问题：
-    - 视觉模型直接输出格式化 Markdown 报告
-    - before_agent_callback 预加载帧数据到 state
-    - after_model_callback 兜底修复并写入 state
-    """
-
-    def _prime_hook_segments_state(callback_context: CallbackContext):
-        """在 LLM 运行前预加载 hook_segments_context，确保数据稳定性"""
-        inv = getattr(callback_context, "_invocation_context", None)
-        if not inv:
-            return None
-        state = getattr(callback_context, "state", None)
-        if isinstance(state, dict) and state.get("hook_segments_context"):
-            return None
-        tool_ctx = ToolContext(inv)
-        context = analyze_hook_segments(tool_ctx)
-        if isinstance(state, dict):
-            state["hook_segments_context"] = context
-        return None
-
-    return Agent(
-        name="hook_agent",
-        model_name=os.getenv("MODEL_VISION_NAME", "doubao-seed-1-6-vision-250815"),
-        description="对视频前三秒进行深度钩子分析，直接输出格式化 Markdown 报告",
-        instruction=HOOK_AGENT_INSTRUCTION,
-        tools=[],
-        output_key="hook_analysis",
-        before_agent_callback=_prime_hook_segments_state,
-        after_model_callback=[soft_fix_hook_output],
-        model_extra_config={
-            "extra_body": {
-                "thinking": {"type": os.getenv("THINKING_HOOK_AGENT", "disabled")},
-                "caching": {"type": "disabled"},  # 禁用缓存，避免账户未激活 cache service
             }
         },
     )
@@ -183,18 +123,17 @@ def create_report_generator_agent() -> Agent:
 
 full_analysis_pipeline = SequentialAgent(
     name="full_analysis_pipeline",
-    description="完整分析生产线：分镜拆解 -> 钩子分析 -> 报告生成",
+    description="完整分析生产线：分镜拆解 + 钩子分析 -> 报告生成",
     sub_agents=[
-        create_breakdown_agent(),
-        create_hook_analyzer_agent(),
+        create_breakdown_agent(include_hook_analysis=True),
         create_report_generator_agent(),
     ],
 )
 
 hook_only_pipeline = SequentialAgent(
     name="hook_only_pipeline",
-    description="钩子分析生产线：分镜拆解 -> 钩子分析",
-    sub_agents=[create_breakdown_agent(), create_hook_analyzer_agent()],
+    description="钩子分析生产线：分镜拆解 + 钩子分析（在同一个 Agent 内完成）",
+    sub_agents=[create_breakdown_agent(include_hook_analysis=True)],
 )
 
 report_only_pipeline = SequentialAgent(
@@ -214,16 +153,16 @@ agent = Agent(
     description=(
         "专业的视频分镜拆解和深度分析助手，"
         "支持URL链接和本地文件上传，"
-        "能够自动拆解视频分镜、分析前三秒钩子、生成专业报告、复刻爆款视频"  # 新增描述
+        "能够自动拆解视频分镜、分析前三秒钩子、生成专业报告、复刻爆款视频"
     ),
     instruction=ROOT_AGENT_INSTRUCTION,
+    tools=[web_search],
     sub_agents=[
         full_analysis_pipeline,
         hook_only_pipeline,
         report_only_pipeline,
         breakdown_only_pipeline,
-        search_agent,
-        video_recreation_agent,  # ✅ 新增：视频复刻Agent
+        video_recreation_agent,
     ],
     short_term_memory=ShortTermMemory(backend="local"),
     # 拦截 veadk web UI 上传的文件（inline_data → 文本 URL/路径）
