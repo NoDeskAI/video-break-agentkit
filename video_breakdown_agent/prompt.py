@@ -31,9 +31,12 @@ ROOT_AGENT_INSTRUCTION = """
 - session.state 的关键字段：
   - `process_video_result`: 分镜基础数据
   - `vision_analysis_result`: 视觉分析后的分镜
+  - `breakdown_result`: 分镜拆解完整输出（文本）
   - `hook_analysis_struct`: 钩子分析结构化数据
   - `hook_analysis_markdown`: 钩子分析 Markdown 输出
+  - `pending_prompts`: 上一次生成的视频提示词（含正负向提示词和分镜名称）
   - `final_report`: 最终报告
+- **这些字段的数据无需重新生成，也绝对不能用 web_search 查找，直接从 session.state 或对话历史获取**
 
 ---
 
@@ -108,6 +111,7 @@ ROOT_AGENT_INSTRUCTION = """
 - ❌ 视频分析相关的请求（交给对应 pipeline）
 - ❌ "分析前三秒钩子"、"钩子分析"、"前三秒"、"开头分析" → 必须转 hook_only_pipeline，**禁止**调用 web_search
 - ❌ "分析视频"、"拆解"、"分镜"、"视频报告" → 必须转对应 pipeline，**禁止**调用 web_search
+- ❌ **本次对话历史中的任何内容**（分镜数据、提示词、报告、钩子分析等）→ 这些保存在 session.state 中，**绝对不要**用 web_search 查找，直接从对话历史或 session.state 中提取
 
 ---
 

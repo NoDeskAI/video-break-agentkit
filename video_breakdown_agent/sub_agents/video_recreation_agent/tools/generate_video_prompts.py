@@ -562,15 +562,23 @@ async def generate_final_prompt(
 
 核心原则（优先级从高到低）：
 1. **画面内容是灵魂**：提示词必须以「画面内容」为核心展开，所有具体的人物、产品、动作、背景元素都必须体现在提示词中，不能省略或替换为笼统词汇
-2. **完全忠于原始脚本**：不编造、不偏离脚本，所有信息来自提供的数据
-3. **专业视觉补充**：在忠实描述画面内容的基础上，自然融入运镜、光影、色调等专业描述
-4. **知识库仅作参考**：知识片段仅在与脚本相关时参考表达风格，不相关则忽略
+2. **主体与动线必须清晰**（新增，最关键）：
+   - 开篇明确镜头主体（人/手/产品/物体），禁止用"画面中"等模糊开头
+   - 凡涉及动作、位移、场景变化，必须从**摄像机视角**说明：
+     主体从哪里 → 做了什么动作 → 移动到哪里 / 状态如何变化
+   - 示例写法："一只手从右侧入画，缓慢将水杯推向画面中央，镜头固定追随手部特写"
+   - 多个主体共存时，说明空间位置关系（前景/背景/左侧/右侧/画面外）
+   - 物体运动时说明运动方向、速度、是否连续（慢推 / 快速掠过 / 静止出现）
+3. **完全忠于原始脚本**：不编造、不偏离脚本，所有信息来自提供的数据
+4. **专业视觉补充**：在忠实描述画面内容的基础上，自然融入运镜、光影、色调等专业描述
+5. **知识库仅作参考**：知识片段仅在与脚本相关时参考表达风格，不相关则忽略
 
 重要：**画面内容字段的每一个具体描述都必须出现在生成的提示词中**。
 
 输出格式：
-- 单段落，以画面实际内容开头，再补充镜头语言和氛围
+- 单段落，以镜头主体+初始状态开头，按顺序描述：动作/变化过程 → 摄像机跟随方式 → 光影/色调/氛围
 - 使用顿号、逗号连接，句号结束
+- 长度：100-200字（描述越丰富越好，但不堆砌重复词）
 """
 
     # 提取增强的视觉信息
@@ -578,8 +586,6 @@ async def generate_final_prompt(
     lighting = visual.get("光影", {})
     color = visual.get("色调", {})
     depth = visual.get("景深", {})
-    composition = visual.get("构图", {})
-    motion = visual.get("运动", {})
 
     # 兼容两种数据格式（旧版字段名 / 新版视觉表现）
     visual_content = segment.get("visual_content", "") or visual.get("画面内容", "无")
@@ -597,7 +603,11 @@ async def generate_final_prompt(
         lighting_summary_parts.append(lighting["光源方向"])
     if lighting.get("明暗对比") not in ("", "中等", "未知", None):
         lighting_summary_parts.append(lighting["明暗对比"])
-    lighting_summary = "、".join(lighting_summary_parts) if lighting_summary_parts else "（无特殊光影）"
+    lighting_summary = (
+        "、".join(lighting_summary_parts)
+        if lighting_summary_parts
+        else "（无特殊光影）"
+    )
 
     color_summary_parts = []
     if color.get("主色调") not in ("", "自然", "中性", "未知", None):
@@ -606,14 +616,18 @@ async def generate_final_prompt(
         color_summary_parts.append(color["色彩氛围"])
     if color.get("滤镜效果") not in ("", "无", "未知", None):
         color_summary_parts.append(f"滤镜:{color['滤镜效果']}")
-    color_summary = "、".join(color_summary_parts) if color_summary_parts else "（自然色调）"
+    color_summary = (
+        "、".join(color_summary_parts) if color_summary_parts else "（自然色调）"
+    )
 
     depth_summary_parts = []
     if depth.get("虚化程度") not in ("", "中等虚化", "未知", None):
         depth_summary_parts.append(depth["虚化程度"])
     if depth.get("焦点主体") not in ("", "主体", "未知", None):
         depth_summary_parts.append(f"焦点:{depth['焦点主体']}")
-    depth_summary = "、".join(depth_summary_parts) if depth_summary_parts else "（标准景深）"
+    depth_summary = (
+        "、".join(depth_summary_parts) if depth_summary_parts else "（标准景深）"
+    )
 
     user_message = f"""
 ## 原始脚本（画面内容必须完整体现，不得省略）
@@ -631,10 +645,16 @@ async def generate_final_prompt(
 
 ## 生成要求
 
-1. 提示词必须以「画面内容」中描述的具体对象和动作开头，确保AI模型能准确重现画面主体
+1. 提示词必须以镜头主体（人物/手/产品/物体）+初始状态开头，禁止以"画面中"/"镜头内"等虚词开头
 2. 画面内容中的每个具体元素（人物、产品、背景道具、文字等）都必须出现在提示词中
-3. 在描述完画面内容后，自然加入镜头语言（{shot_type}，{camera_movement}）和光影/色调补充
-4. 音频信息（语音/BGM）放在提示词末尾
+3. **动作/位移描述规范**：凡涉及动作或运动，必须说明：
+   - 主体身份（谁/什么在动）
+   - 起始位置（从画面哪个位置/从哪里入画）
+   - 运动轨迹和方向（向左/向前/从近到远/由下至上等）
+   - 运动结果（到达哪里/状态如何变化）
+   - 摄像机配合方式（固定机位/跟随推进/切至特写等）
+4. 在描述完画面内容和动线后，自然加入镜头语言（{shot_type}，{camera_movement}）和光影/色调补充
+5. 音频信息（语音/BGM）放在提示词末尾
 
 生成提示词：
 """
@@ -671,8 +691,12 @@ async def generate_single_stage_llm_prompt(
     system_prompt = """
 你是视频提示词专家。基于原始脚本，生成专业视频生成提示词。
 
-输出格式：单段落，150-300字，包含主体+场景+运动+运镜+光影+色调+景深+构图+音频。
-重点强化：将光影、色调、景深、构图、运动细节自然融入提示词。
+核心要求：
+1. 以镜头主体（人/手/产品/物体）+初始状态开头，禁止用"画面中"/"镜头内"等虚词开头
+2. 凡有动作或位移，必须说明：主体身份 → 起始位置 → 运动方向/轨迹 → 终点/结果状态 → 摄像机配合方式
+3. 多主体共存时，说明其空间位置关系（前景/背景/左右）
+
+输出格式：单段落，150-250字，按顺序：主体+动线描述 → 镜头语言（运镜/景别）→ 光影/色调 → 音频。
 """
 
     # 提取增强的视觉信息
@@ -740,9 +764,15 @@ def build_cinematic_prompt(
     """
     # 提取分镜数据，兼容新版（视觉表现.画面内容）和旧版（顶层 visual_content）两种格式
     visual_info = segment.get("视觉表现", {})
-    visual_content = segment.get("visual_content", "") or visual_info.get("画面内容", "")
-    shot_type = segment.get("shot_type", "") or visual_info.get("景别", "中景") or "中景"
-    camera_movement = segment.get("camera_movement", "") or visual_info.get("运镜", "固定") or "固定"
+    visual_content = segment.get("visual_content", "") or visual_info.get(
+        "画面内容", ""
+    )
+    shot_type = (
+        segment.get("shot_type", "") or visual_info.get("景别", "中景") or "中景"
+    )
+    camera_movement = (
+        segment.get("camera_movement", "") or visual_info.get("运镜", "固定") or "固定"
+    )
     scene = segment.get("scene", "室内场景")
     duration = segment.get("duration", 3.0)
 
@@ -882,9 +912,13 @@ async def generate_video_prompts(
         filter_indexes: Optional[set] = None
         if segment_indexes and segment_indexes.strip():
             try:
-                filter_indexes = {int(x.strip()) for x in segment_indexes.split(",") if x.strip()}
+                filter_indexes = {
+                    int(x.strip()) for x in segment_indexes.split(",") if x.strip()
+                }
             except ValueError:
-                logger.warning(f"segment_indexes 格式无效，忽略过滤: {segment_indexes!r}")
+                logger.warning(
+                    f"segment_indexes 格式无效，忽略过滤: {segment_indexes!r}"
+                )
 
         logger.info(
             f"开始生成提示词，共{len(segments)}个分镜，模式: {'Skill' if use_skill_mode else '函数'}"
@@ -1003,7 +1037,9 @@ async def generate_video_prompts(
                 "first_frame": first_frame,
                 "resolution": "720p",
                 "ratio": "9:16",
-                "selected": (idx == 1) if not filter_indexes else (idx in filter_indexes),
+                "selected": (idx == 1)
+                if not filter_indexes
+                else (idx in filter_indexes),
                 "estimated_cost": estimated_cost,
                 "generation_method": generation_method,
             }

@@ -189,6 +189,41 @@ async def direct_video_generation(
         }
     """
     try:
+        # ── 优先复用已有 pending_prompts（适用于"用这个提示词生成视频"场景）──────────
+        # 当用户说"用这个提示词生成同款视频"时，user_message 里不含提示词文本，
+        # 但上一轮 generate_video_prompts 已将提示词写入 pending_prompts。
+        # 此时直接复用，重置 selected=True，跳过 user_message 解析。
+        existing_pending = tool_context.state.get("pending_prompts")
+        if not positive_prompt and existing_pending:
+            existing_prompts = existing_pending.get("prompts", [])
+            valid_prompts = [
+                p for p in existing_prompts if p.get("positive_prompt", "").strip()
+            ]
+            if valid_prompts:
+                # 重新启用所有有效提示词（之前可能被 video_generate 重置为 selected=False）
+                for p in valid_prompts:
+                    p["selected"] = True
+                tool_context.state["pending_prompts"] = {
+                    **existing_pending,
+                    "prompts": existing_prompts,
+                    "total_selected": len(valid_prompts),
+                }
+                names = ", ".join(p.get("segment_name", "") for p in valid_prompts)
+                logger.info(
+                    f"[direct_video_generation] 复用已有 pending_prompts: {names}"
+                )
+                return {
+                    "status": "success",
+                    "message": f"✅ 已复用上一次生成的提示词（{names}），即将生成视频",
+                    "segment_name": valid_prompts[0].get("segment_name", ""),
+                    "prompt_length": len(valid_prompts[0].get("positive_prompt", "")),
+                    "estimated_cost": sum(
+                        p.get("estimated_cost", 0.7) for p in valid_prompts
+                    ),
+                    "prepared": True,
+                }
+        # ────────────────────────────────────────────────────────────────────────────
+
         # 获取用户原始消息
         user_message = tool_context.state.get("user_message", "")
 

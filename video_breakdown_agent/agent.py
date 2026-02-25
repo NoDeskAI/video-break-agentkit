@@ -9,6 +9,8 @@ import json as _json
 import logging
 import os
 
+from google.adk.agents.callback_context import CallbackContext
+from google.adk.tools import ToolContext
 from veadk import Agent
 from veadk.agents.sequential_agent import SequentialAgent
 from veadk.memory.short_term_memory import ShortTermMemory
@@ -30,6 +32,7 @@ from .tools.analyze_segments_vision import analyze_segments_vision
 from .tools.analyze_bgm import analyze_bgm
 from .tools.video_upload import video_upload_to_tos
 from .tools.report_generator import generate_video_report
+from .tools.analyze_hook_segments import analyze_hook_segments
 
 # ==================== 视频复刻Agent导入（新增） ====================
 from .sub_agents.video_recreation_agent.agent import video_recreation_agent
@@ -51,6 +54,9 @@ try:
         """json 模块的 drop-in 替换，loads 失败时回退到 json_repair.loads。"""
 
         def loads(self, s, **kwargs):
+            # LLM 有时对无参数工具生成空字符串 args，直接返回空 dict 避免 Pydantic 校验失败
+            if not s or (isinstance(s, str) and not s.strip()):
+                return {}
             try:
                 return _json.loads(s, **kwargs)
             except _json.JSONDecodeError as exc:
@@ -103,6 +109,52 @@ if root_before_model_callback:
 # ==================== Factory functions (避免 SequentialAgent 共享 parent) ====================
 
 
+def _prime_hook_segments_state(callback_context: CallbackContext):
+    """
+    在 breakdown_agent(include_hook_analysis=True) 运行前，
+    将 session.state 中已有的分镜数据预处理为 hook_segments_context 并回写 state。
+
+    保障机制：
+    - 读写对象是 session.state（代码层面），而非对话历史，云端 agentkit 同样可用。
+    - 若用户消息中包含新视频 URL（http/https），跳过注入，避免旧数据干扰新视频处理。
+    - 若 state 中没有分镜数据，函数无副作用，LLM 走正常工具流程。
+    """
+    # ① 用户消息含新视频 URL → 跳过注入，让工具处理新视频
+    user_content = getattr(callback_context, "user_content", None)
+    if user_content:
+        for part in getattr(user_content, "parts", []) or []:
+            text = getattr(part, "text", "") or ""
+            if "http://" in text or "https://" in text:
+                logger.debug(
+                    "[_prime_hook_segments_state] 检测到新视频URL，跳过state注入"
+                )
+                return None
+
+    # ② 读取 session.state 并注入 hook_segments_context
+    inv = getattr(callback_context, "_invocation_context", None)
+    if not inv:
+        return None
+    state = getattr(callback_context, "state", None)
+    if not isinstance(state, dict):
+        return None
+
+    tool_ctx = ToolContext(inv)
+    context = analyze_hook_segments(tool_ctx)  # 从 state["vision_analysis_result"] 读取
+
+    if context.get("segment_count", 0) > 0:
+        state["hook_segments_context"] = context
+        logger.info(
+            "[_prime_hook_segments_state] 已注入 hook_segments_context: "
+            "%d 个分镜，总时长 %.1fs",
+            context["segment_count"],
+            context.get("total_duration", 0),
+        )
+    else:
+        logger.debug("[_prime_hook_segments_state] state 无分镜数据，跳过注入")
+
+    return None
+
+
 def create_breakdown_agent(include_hook_analysis: bool = False) -> Agent:
     """
     创建分镜拆解 Agent。
@@ -110,6 +162,8 @@ def create_breakdown_agent(include_hook_analysis: bool = False) -> Agent:
     Args:
         include_hook_analysis: 为 True 时在 instruction 末尾附加钩子分析模板，
                                用于 hook_only_pipeline 和 full_analysis_pipeline。
+                               同时注册 before_agent_callback 将 state 中已有的分镜数据
+                               预注入为 hook_segments_context，实现代码级 state 保障。
     """
     instruction = BREAKDOWN_AGENT_INSTRUCTION
     if include_hook_analysis:
@@ -129,6 +183,9 @@ def create_breakdown_agent(include_hook_analysis: bool = False) -> Agent:
             video_upload_to_tos,
         ],
         output_key="breakdown_result",
+        before_agent_callback=_prime_hook_segments_state
+        if include_hook_analysis
+        else None,
         model_extra_config={
             "extra_body": {
                 "thinking": {"type": os.getenv("THINKING_BREAKDOWN_AGENT", "disabled")}

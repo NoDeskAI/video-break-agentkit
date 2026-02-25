@@ -111,6 +111,13 @@ def _resolve_report_inputs(
         if isinstance(state_hook_md, str) and state_hook_md.strip():
             hook = _fallback_hook_from_markdown(state_hook_md)
 
+    # 最终兜底：尝试从 breakdown_result 文本中提取钩子数据
+    # （当 breakdown_agent 在 include_hook_analysis=True 模式下运行时，报告包含在其输出中）
+    if not hook:
+        breakdown_text = state.get("breakdown_result")
+        if isinstance(breakdown_text, str) and "前三秒钩子分析" in breakdown_text:
+            hook = _fallback_hook_from_markdown(breakdown_text)
+
     # BGM 工具可选落盘，若存在则补齐
     state_bgm = state.get("bgm_analysis_result")
     if isinstance(state_bgm, dict) and isinstance(breakdown, dict):
