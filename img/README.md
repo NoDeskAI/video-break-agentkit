@@ -13,7 +13,8 @@ graph TD
     RootAgent --> BreakdownAgent[Breakdown Agent<br/>分镜拆解]
     RootAgent --> HookAnalyzer[Hook Analyzer Agent<br/>钩子分析]
     RootAgent --> ReportGen[Report Generator Agent<br/>报告生成]
-    RootAgent --> SearchAgent[Search Agent<br/>联网搜索]
+    RootAgent --> VideoRecreation[Video Recreation Agent<br/>视频复刻]
+    RootAgent --> WebSearch[web_search<br/>联网搜索]
 
     BreakdownAgent --> ProcessVideo[process_video<br/>FFmpeg预处理+ASR]
     BreakdownAgent --> AnalyzeVision[analyze_segments_vision<br/>LiteLLM视觉分析]
@@ -32,13 +33,15 @@ graph TD
     ReportGen --> GenerateReport[generate_video_report<br/>Markdown报告生成]
     GenerateReport --> FinalReport[(Session State<br/>final_report)]
 
-    SearchAgent --> WebSearch[web_search<br/>实时信息搜索]
+    VideoRecreation --> PromptGen[Prompt Generator<br/>三阶段提示词生成]
+    VideoRecreation --> VideoGen[Video Generator<br/>Doubao-Seedance API]
+    VideoRecreation --> VideoMerge[Video Merge<br/>分镜视频合并]
 
     style RootAgent fill:#e1f5ff
     style BreakdownAgent fill:#fff4e1
     style HookAnalyzer fill:#ffe1f5
     style ReportGen fill:#e1ffe1
-    style SearchAgent fill:#f5e1ff
+    style VideoRecreation fill:#f5f5e1
     style SessionState fill:#ffd700
     style SessionState2 fill:#ffd700
     style FinalReport fill:#ffd700
@@ -53,32 +56,27 @@ sequenceDiagram
     participant Breakdown as Breakdown Agent
     participant Hook as Hook Analyzer
     participant Report as Report Generator
+    participant Recreation as Video Recreation
     participant State as Session State
 
     User->>Root: 上传视频/提供URL
     Root->>Breakdown: 委派分镜拆解任务
-
-    Breakdown->>Breakdown: FFmpeg视频预处理
-    Breakdown->>Breakdown: 火山ASR语音识别
-    Breakdown->>Breakdown: 提取关键帧
-    Breakdown->>Breakdown: LiteLLM视觉分析
     Breakdown->>State: 写入 breakdown_result
-    Breakdown->>Root: 返回分镜数据
+    Breakdown->>Root: 返回数据
 
     Root->>Hook: 委派钩子分析任务
     Hook->>State: 读取 breakdown_result
-    Hook->>Hook: 提取前3秒分镜
-    Hook->>Hook: Vision模型多模态分析
-    Hook->>Hook: JSON格式化校验
     Hook->>State: 写入 hook_analysis
-    Hook->>Root: 返回钩子评分
+    Hook->>Root: 返回评分
 
     Root->>Report: 委派报告生成任务
-    Report->>State: 读取 breakdown_result
-    Report->>State: 读取 hook_analysis
-    Report->>Report: 整合数据生成Markdown
-    Report->>State: 写入 final_report
-    Report->>Root: 返回完整报告
+    Report->>State: 整合结果生成Markdown
+    Report->>Root: 返回报告
+
+    Root->>Recreation: 委派视频复刻任务
+    Recreation->>Recreation: 提示词生成
+    Recreation->>Recreation: 视频生成与合并
+    Recreation->>Root: 返回视频链接
 
     Root->>User: 展示分析结果
 ```
@@ -147,7 +145,7 @@ graph LR
 
 架构图应展示以下关键信息：
 
-1. **Multi-Agent 协作关系**：Root Agent 如何协调 4 个子 Agent
+1. **Multi-Agent 协作关系**：Root Agent 如何协调各子 Agent
 2. **数据流转路径**：Session State 如何在 Agent 之间传递数据
 3. **工具调用链路**：每个 Agent 调用哪些工具函数
 4. **火山引擎集成**：使用了哪些火山产品和服务
@@ -155,4 +153,4 @@ graph LR
 
 ## 当前状态
 
-> 架构图文件待补充。建议使用上述 Mermaid 代码生成或自行绘制后保存为 `img/architecture.jpg`。
+> 架构图文件：`img/architecture_video_breakdown_agent.jpg`。

@@ -11,13 +11,20 @@ Agent 定义位于 video_breakdown_agent/agent.py（veadk web 的唯一真相来
 
 import logging
 import os
+import sys
+from pathlib import Path
 
-from veadk import Runner
-from veadk.memory.short_term_memory import ShortTermMemory
-from agentkit.apps import AgentkitAgentServerApp
+# 将当前目录和子包目录添加到 sys.path，增强部署时的路径兼容性
+current_dir = str(Path(__file__).resolve().parent)
+if current_dir not in sys.path:
+    sys.path.append(current_dir)
+
+from veadk import Runner  # noqa: E402
+from veadk.memory.short_term_memory import ShortTermMemory  # noqa: E402
+from agentkit.apps import AgentkitAgentServerApp  # noqa: E402
 
 # 从包中导入唯一的 root_agent 定义
-from video_breakdown_agent.agent import root_agent
+from video_breakdown_agent.agent import root_agent  # noqa: E402
 
 # ==================== 日志配置 ====================
 

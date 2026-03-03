@@ -17,7 +17,13 @@ This project provides the following core capabilities:
 
 ## Agent Architecture
 
-![Video Breakdown Agent with AgentKit Runtime](assets/architecture_video_breakdown_agent.jpg)
+### Agent Workflow
+
+![Agent Workflow](img/scene_architecture.png)
+
+### Technical Architecture
+
+![Video Breakdown Agent with AgentKit Runtime](img/architecture_video_breakdown_agent.png)
 
 ```text
 User Input (Video URL/Local File)
@@ -35,11 +41,11 @@ Root Agent (XiaoShi - Main Orchestrator)
     │   ├── Multimodal Vision Scoring
     │   └── JSON Formatting
     ├── Report Generator Agent (Report Generation)
-    ├── Search Agent (Web Search)
-    └── Video Recreation Agent (Video Recreation)
-        ├── Prompt Generator (3-stage LLM workflow)
-        ├── Video Generator (Doubao-Seedance API)
-        └── Video Merge (Scene stitching)
+    ├── Video Recreation Agent (Video Recreation)
+    │   ├── Prompt Generator (3-stage LLM workflow)
+    │   ├── Video Generator (Doubao-Seedance API)
+    │   └── Video Merge (Scene stitching)
+    └── Web Search (Direct Tool)
 ```
 
 Main Volcengine products and Agent components:
@@ -190,7 +196,6 @@ The video follows a "General -> Detail -> Scenario -> Extension" logic, forming 
 video_breakdown_agent/
 ├── README.md                   # Project documentation (Chinese)
 ├── README_en.md                # Project documentation (English)
-├── README_CONFIG.md            # Detailed configuration guide
 ├── project.toml                # Application marketplace metadata
 ├── agent.py                    # AgentKit deployment entry
 ├── requirements.txt            # pip dependencies
@@ -310,8 +315,6 @@ export DATABASE_TOS_BUCKET=your_tos_bucket_name
 
 **Priority**: System environment variables > `.env` file > `config.yaml`
 
-For detailed configuration instructions, see [README_CONFIG.md](README_CONFIG.md).
-
 ### Running the Application
 
 **Method 1: Local debugging with veadk web (recommended)**
@@ -413,8 +416,6 @@ docker run -p 8000:8000 \
 ./deploy.sh
 ```
 
-For detailed deployment instructions, see [DEPLOY_GUIDE.md](DEPLOY_GUIDE.md).
-
 ## Key Features
 
 ### 1. Multi-Agent Architecture
@@ -423,7 +424,7 @@ For detailed deployment instructions, see [DEPLOY_GUIDE.md](DEPLOY_GUIDE.md).
 - **Breakdown Agent**: Video preprocessing + vision analysis (5 dimensions) + BGM analysis
 - **Hook Analyzer Agent**: SequentialAgent (vision scoring → JSON formatting)
 - **Report Generator Agent**: Markdown report generation
-- **Search Agent**: Real-time web search
+- **Web Search (direct tool)**: Real-time web search
 - **Video Recreation Agent**: Prompt generation + Doubao-Seedance video generation + scene merging
 
 ### 2. Video Recreation & Generation (New in v3.0)

@@ -33,5 +33,12 @@ venv/
 .vscode/
 .DS_Store
 
+# Ruff 缓存
+.ruff_cache/
+
+# AgentKit CLI 生成的本地部署配置（含密钥，禁止提交）
+agentkit.v3.yaml
+agentkit.v*.yaml
+
 # 日志
 *.log

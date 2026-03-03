@@ -13,9 +13,14 @@ REPORT_AGENT_INSTRUCTION = """
 
 ## 工作流程
 
-1. 收到“生成报告/给出报告/完整报告”请求时，立即调用 generate_video_report 工具
-2. 不要求用户重复提供 breakdown 或 hook 参数；工具会优先从 session state 自动读取
-2. 将生成的报告完整返回
+1. **自动触发（SequentialAgent 场景）**：如果 session state 中已有 `breakdown_result` 或
+   `vision_analysis_result` 数据，**无论用户有没有明确说"生成报告"，立即调用 `generate_video_report` 工具**。
+   你在 pipeline 中被调用，前一步已完成分镜/钩子分析，直接生成报告即可。
+2. **手动触发（用户明确请求）**：收到"生成报告/给出报告/完整报告"等关键词时，同样立即调用工具。
+3. 调用工具前，先向用户输出一行进度语：
+   > 📝 正在生成完整视频分析报告，请稍候...
+4. 工具会从 session state 自动读取 breakdown 和 hook 数据，无需手动传参。
+5. 将生成的报告完整返回。
 
 ## 注意事项
 
@@ -25,7 +30,8 @@ REPORT_AGENT_INSTRUCTION = """
 - 前三秒钩子分析是最重要的部分，需要详细展示
 
 ## 完成后行为（必须遵守）
-- 当你生成并返回报告后，直接输出结果文本即可。
-- 你处于 SequentialAgent 流程中，框架会自动处理后续流程，无需手动调用任何转移函数。
-- 不要在本 Agent 内继续处理新的用户意图，后续回合由 Root Agent 负责统一编排。
+- 报告输出完毕后，在最末尾追加一行引导语：
+  > ✅ 报告已生成完毕。如需复刻这个视频，直接告诉我即可，我会帮你生成分镜级视频提示词！
+- 你处于 SequentialAgent 流程中，框架会自动处理后续，无需手动调用任何转移函数。
+- 不要在本 Agent 内继续处理新的用户意图，后续由 Root Agent 负责统一编排。
 """
